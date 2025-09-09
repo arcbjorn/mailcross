@@ -527,7 +527,8 @@ impl eframe::App for MailCrossApp {
             match layout_mode {
                 LayoutMode::ThreePane => self.render_three_pane(ui),
                 LayoutMode::TwoPane => self.render_two_pane(ui),
-                LayoutMode::SinglePane => self.render_single_pane(ui),
+                LayoutMode::CompactPane => self.render_compact_pane(ui),
+                LayoutMode::MobilePane => self.render_mobile_pane(ui),
             }
             
             // Show vim command buffer if in command mode
@@ -698,29 +699,34 @@ impl eframe::App for MailCrossApp {
 impl MailCrossApp {
     fn render_three_pane(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            // Calculate dynamic widths based on available space
+            ui.spacing_mut().item_spacing.x = ResponsiveLayout::PANEL_SPACING;
+            
+            // Calculate optimal widths for fullscreen comfort
             let available_width = ui.available_width();
-            let folder_width = ResponsiveLayout::calculate_folder_width(available_width);
-            let email_width = ResponsiveLayout::calculate_email_width(available_width);
+            let folder_width = ResponsiveLayout::calculate_folder_width_fullscreen(available_width);
+            let email_width = ResponsiveLayout::calculate_email_width_fullscreen(available_width);
             
             // Left panel - Folders
             ui.vertical(|ui| {
                 ui.set_width(folder_width);
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
                 FoldersPanel::render(ui, &mut self.selected_folder);
             });
 
-            ui.separator();
+            self.render_minimal_separator(ui);
 
-            // Middle panel - Email list
+            // Middle panel - Email list  
             ui.vertical(|ui| {
                 ui.set_width(email_width);
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
                 EmailsPanel::render_with_search(ui, &mut self.selected_email, &self.search_state);
             });
 
-            ui.separator();
+            self.render_minimal_separator(ui);
 
-            // Right panel - Email content (takes remaining space)
+            // Right panel - Email content (remaining space)
             ui.vertical(|ui| {
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
                 PreviewPanel::render(ui, self.selected_email);
             });
         });
@@ -728,59 +734,123 @@ impl MailCrossApp {
 
     fn render_two_pane(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = ResponsiveLayout::PANEL_SPACING;
+            
             let available_width = ui.available_width();
-            let left_width = ResponsiveLayout::calculate_left_pane_width(available_width);
+            let left_width = ResponsiveLayout::calculate_left_pane_width_half(available_width);
             
             // Left side - Folders + Emails combined
             ui.vertical(|ui| {
                 ui.set_width(left_width);
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
                 
-                // Folders section (compact)
+                // Folders section (compact horizontal strip)
                 ui.horizontal(|ui| {
                     ui.set_height(80.0);
                     FoldersPanel::render_compact(ui, &mut self.selected_folder);
                 });
                 
-                ui.separator();
+                ui.add_space(ResponsiveLayout::PANEL_SPACING);
+                self.render_horizontal_separator(ui);
+                ui.add_space(ResponsiveLayout::PANEL_SPACING);
                 
                 // Emails section
                 EmailsPanel::render_with_search(ui, &mut self.selected_email, &self.search_state);
             });
 
-            ui.separator();
+            self.render_minimal_separator(ui);
 
             // Right side - Email preview
             ui.vertical(|ui| {
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
                 PreviewPanel::render(ui, self.selected_email);
             });
         });
     }
 
-    fn render_single_pane(&mut self, ui: &mut egui::Ui) {
-        // Stack everything vertically for narrow screens
+    fn render_compact_pane(&mut self, ui: &mut egui::Ui) {
+        // Half vertical layout - stack with balanced proportions
         ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = ResponsiveLayout::PANEL_SPACING;
+            let available_height = ui.available_height();
+            
             // Top: Folders (horizontal strip)
             ui.horizontal(|ui| {
-                ui.set_height(60.0);
+                ui.set_height(ResponsiveLayout::calculate_folder_height_compact());
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
                 FoldersPanel::render_compact(ui, &mut self.selected_folder);
             });
             
-            ui.separator();
+            self.render_horizontal_separator(ui);
             
-            // Middle: Email list (limited height)
+            // Middle: Email list (calculated height)
             ui.vertical(|ui| {
-                ui.set_height(200.0);
-                if self.search_state.active {
-                    EmailsPanel::render_with_search(ui, &mut self.selected_email, &self.search_state);
-                } else {
-                    EmailsPanel::render_compact(ui, &mut self.selected_email);
-                }
+                let email_height = ResponsiveLayout::calculate_email_height_compact(available_height);
+                ui.set_height(email_height);
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
+                EmailsPanel::render_with_search(ui, &mut self.selected_email, &self.search_state);
             });
             
-            ui.separator();
+            self.render_horizontal_separator(ui);
             
             // Bottom: Email preview (remaining space)
-            PreviewPanel::render(ui, self.selected_email);
+            ui.vertical(|ui| {
+                ui.add_space(ResponsiveLayout::INNER_PADDING);
+                PreviewPanel::render(ui, self.selected_email);
+            });
         });
+    }
+
+    fn render_mobile_pane(&mut self, ui: &mut egui::Ui) {
+        // Quarter/mobile layout - single column, minimal spacing
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = ResponsiveLayout::PANEL_SPACING;
+            
+            // Compact folder strip
+            ui.horizontal(|ui| {
+                ui.set_height(ResponsiveLayout::calculate_mobile_item_height());
+                FoldersPanel::render_mobile(ui, &mut self.selected_folder);
+            });
+            
+            // Minimal separator
+            ui.add_space(2.0);
+            
+            // If search is active, show search, otherwise show email list
+            if self.search_state.active {
+                ui.vertical(|ui| {
+                    ui.set_height(ui.available_height() * 0.4);
+                    EmailsPanel::render_mobile(ui, &mut self.selected_email, &self.search_state);
+                });
+                
+                ui.add_space(2.0);
+                
+                // Preview takes remaining space
+                PreviewPanel::render_mobile(ui, self.selected_email);
+            } else {
+                // Focus on email list when not searching
+                EmailsPanel::render_mobile_full(ui, &mut self.selected_email);
+            }
+        });
+    }
+
+    // Helper methods for visual consistency
+    fn render_minimal_separator(&self, ui: &mut egui::Ui) {
+        ui.allocate_space(egui::vec2(ResponsiveLayout::SEPARATOR_WIDTH, ui.available_height()));
+        let rect = ui.min_rect();
+        ui.painter().rect_filled(
+            rect,
+            0.0,
+            ui.visuals().widgets.noninteractive.bg_stroke.color.gamma_multiply(0.3)
+        );
+    }
+
+    fn render_horizontal_separator(&self, ui: &mut egui::Ui) {
+        ui.allocate_space(egui::vec2(ui.available_width(), ResponsiveLayout::SEPARATOR_WIDTH));
+        let rect = ui.min_rect();
+        ui.painter().rect_filled(
+            rect,
+            0.0,
+            ui.visuals().widgets.noninteractive.bg_stroke.color.gamma_multiply(0.3)
+        );
     }
 }
