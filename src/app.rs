@@ -601,7 +601,7 @@ impl eframe::App for MailCrossApp {
                     ui.heading(if self.help_vim_mode { "Vim Mode" } else { "Traditional Mode" });
                     ui.separator();
                     
-                    egui::ScrollArea::vertical().show(ui, |ui| {
+                    egui::ScrollArea::vertical().id_salt("help").show(ui, |ui| {
                         let shortcuts = if self.help_vim_mode {
                             crate::input::VimKeymap::get_help_text()
                         } else {

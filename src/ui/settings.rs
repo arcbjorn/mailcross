@@ -79,7 +79,7 @@ impl SettingsWindow {
             .default_size([400.0, 500.0])
             .open(&mut should_close)
             .show(ctx, |ui| {
-                egui::ScrollArea::vertical().show(ui, |ui| {
+                egui::ScrollArea::vertical().id_salt("settings").show(ui, |ui| {
                     // Input Mode Settings
                     ui.heading("Input Mode");
                     ui.separator();

@@ -8,6 +8,7 @@ impl EmailsPanel {
     pub fn render(ui: &mut egui::Ui, selected_email: &mut usize) {
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
+            .id_salt("basic_emails")
             .show(ui, |ui| {
                 Self::render_email_list(ui, selected_email);
             });
@@ -16,6 +17,7 @@ impl EmailsPanel {
     pub fn render_with_search(ui: &mut egui::Ui, selected_email: &mut usize, search_state: &SearchState) {
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
+            .id_salt("main_emails")
             .show(ui, |ui| {
                 if search_state.active && search_state.has_results() {
                     Self::render_search_results(ui, search_state);
@@ -124,7 +126,7 @@ impl EmailsPanel {
             ("Evan", "Lunch Plans", "Jan 11"),
         ];
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
+        egui::ScrollArea::vertical().id_salt("mobile_emails").show(ui, |ui| {
             for (i, (sender, subject, _date)) in emails.iter().enumerate() {
                 let selected = *selected_email == i;
                 
