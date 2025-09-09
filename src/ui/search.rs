@@ -179,56 +179,31 @@ impl SearchPanel {
         let mut search_completed = false;
         
         ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = crate::ui::ResponsiveLayout::PANEL_SPACING;
+            ui.spacing_mut().item_spacing.x = 4.0;
             
-            // Compact search indicator
-            ui.weak("🔍");
-            ui.colored_label(
-                ui.visuals().strong_text_color(),
-                search_state.get_scope_display()
-            );
-            
-            // Minimal mode selector (only show if not mobile)
+            // Ultra-compact search layout
             let available_width = ui.available_width();
-            if available_width > 400.0 {
-                egui::ComboBox::from_id_salt("search_mode")
-                    .selected_text(search_state.get_mode_display())
-                    .width(60.0)
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut search_state.search_mode, SearchMode::All, "All");
-                        ui.selectable_value(&mut search_state.search_mode, SearchMode::Subject, "Subject");
-                        ui.selectable_value(&mut search_state.search_mode, SearchMode::Sender, "Sender");
-                        ui.selectable_value(&mut search_state.search_mode, SearchMode::Body, "Body");
-                    });
-            }
             
-            // Responsive search input
-            let input_width = if available_width > 500.0 { 
-                available_width - 300.0 
-            } else { 
-                available_width - 150.0 
-            };
-            
+            // Search input (most of the space)
+            let input_width = available_width - 120.0;
             let response = ui.add_sized(
-                [input_width.max(100.0), 20.0],
+                [input_width.max(120.0), 22.0],
                 egui::TextEdit::singleline(&mut search_state.query)
-                    .hint_text("Search...")
+                    .hint_text(format!("Search {} ...", search_state.get_scope_display().to_lowercase()))
             );
             
             if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 search_completed = true;
             }
             
-            // Compact results info
+            // Results count (compact)
             if search_state.has_results() {
                 ui.weak(format!("{}/{}", 
                     search_state.selected_result + 1, 
                     search_state.result_count()));
-            } else if !search_state.query.is_empty() {
-                ui.weak("∅");
             }
             
-            // Minimal close button
+            // Close button
             if ui.small_button("✕").clicked() {
                 search_state.cancel_search();
             }
