@@ -33,6 +33,7 @@ pub struct MailCrossApp {
     pub composer: ComposerWindow,
     pub delete_confirmation: Option<DeleteConfirmation>,
     pub search_state: SearchState,
+    pub settings: SettingsWindow,
 }
 
 impl MailCrossApp {
@@ -62,6 +63,7 @@ impl MailCrossApp {
             composer: ComposerWindow::new(),
             delete_confirmation: None,
             search_state: SearchState::new(),
+            settings: SettingsWindow::new(),
         }
     }
     
@@ -262,7 +264,9 @@ impl MailCrossApp {
             
             // Settings and help
             KeyAction::Settings => {
-                self.status_message = "Settings".to_string();
+                self.settings.update_vim_mode(self.keyboard_handler.vim_mode);
+                self.settings.show();
+                self.status_message = "Opening settings".to_string();
             }
             KeyAction::Help => {
                 self.show_help = true;
@@ -409,6 +413,43 @@ impl MailCrossApp {
         self.delete_confirmation = None;
     }
 
+    fn handle_settings_action(&mut self, action: SettingsAction) {
+        match action {
+            SettingsAction::Apply => {
+                // Apply settings changes
+                self.keyboard_handler.vim_mode = self.settings.get_vim_mode();
+                if !self.settings.get_vim_mode() {
+                    self.vim_state.reset();
+                }
+                self.settings.hide();
+                self.status_message = "Settings applied".to_string();
+            }
+            SettingsAction::Cancel => {
+                // Restore previous settings
+                self.settings.update_vim_mode(self.keyboard_handler.vim_mode);
+                self.settings.hide();
+                self.status_message = "Settings cancelled".to_string();
+            }
+            SettingsAction::Reset => {
+                self.settings.reset_to_defaults();
+                self.status_message = "Settings reset to defaults".to_string();
+            }
+            SettingsAction::VimModeToggled(enabled) => {
+                // Immediate feedback for vim mode toggle
+                self.keyboard_handler.vim_mode = enabled;
+                if !enabled {
+                    self.vim_state.reset();
+                }
+                let mode_name = if enabled { "Vim" } else { "Traditional" };
+                self.status_message = format!("Switched to {} mode", mode_name);
+            }
+            SettingsAction::ThemeChanged(theme) => {
+                self.status_message = format!("Theme changed to {}", theme.display_name());
+                // TODO: Apply theme changes to egui context
+            }
+        }
+    }
+
 }
 
 impl eframe::App for MailCrossApp {
@@ -429,6 +470,11 @@ impl eframe::App for MailCrossApp {
         let accounts: Vec<&Account> = self.account_manager.get_accounts();
         if let Some(action) = self.composer.render(ctx, &accounts) {
             self.handle_composer_action(action);
+        }
+
+        // Handle settings window
+        if let Some(action) = self.settings.render(ctx) {
+            self.handle_settings_action(action);
         }
         
         // Top panel for account switching
@@ -595,6 +641,7 @@ impl eframe::App for MailCrossApp {
             if toggle_vim {
                 self.keyboard_handler.toggle_vim_mode();
                 self.vim_state.reset();
+                self.settings.update_vim_mode(self.keyboard_handler.vim_mode);
                 let mode_name = if self.keyboard_handler.vim_mode { "Vim" } else { "Normal" };
                 self.status_message = format!("Switched to {} mode", mode_name);
                 self.help_vim_mode = self.keyboard_handler.vim_mode;
