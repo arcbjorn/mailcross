@@ -1,4 +1,6 @@
 mod app;
+mod backend;
+mod input;
 mod types;
 mod ui;
 
