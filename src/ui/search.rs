@@ -178,39 +178,57 @@ impl SearchPanel {
         let mut search_completed = false;
         
         ui.horizontal(|ui| {
-            ui.label("🔍");
+            ui.spacing_mut().item_spacing.x = crate::ui::ResponsiveLayout::PANEL_SPACING;
             
-            // Search scope indicator
-            ui.label(format!("[{}]", search_state.get_scope_display()));
-            ui.separator();
+            // Compact search indicator
+            ui.weak("🔍");
+            ui.colored_label(
+                ui.visuals().strong_text_color(),
+                search_state.get_scope_display()
+            );
             
-            // Search mode selector
-            egui::ComboBox::from_id_salt("search_mode")
-                .selected_text(search_state.get_mode_display())
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut search_state.search_mode, SearchMode::All, "All");
-                    ui.selectable_value(&mut search_state.search_mode, SearchMode::Subject, "Subject");
-                    ui.selectable_value(&mut search_state.search_mode, SearchMode::Sender, "Sender");
-                    ui.selectable_value(&mut search_state.search_mode, SearchMode::Body, "Body");
-                });
+            // Minimal mode selector (only show if not mobile)
+            let available_width = ui.available_width();
+            if available_width > 400.0 {
+                egui::ComboBox::from_id_salt("search_mode")
+                    .selected_text(search_state.get_mode_display())
+                    .width(60.0)
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut search_state.search_mode, SearchMode::All, "All");
+                        ui.selectable_value(&mut search_state.search_mode, SearchMode::Subject, "Subject");
+                        ui.selectable_value(&mut search_state.search_mode, SearchMode::Sender, "Sender");
+                        ui.selectable_value(&mut search_state.search_mode, SearchMode::Body, "Body");
+                    });
+            }
             
-            // Search input
-            let response = ui.text_edit_singleline(&mut search_state.query);
+            // Responsive search input
+            let input_width = if available_width > 500.0 { 
+                available_width - 300.0 
+            } else { 
+                available_width - 150.0 
+            };
+            
+            let response = ui.add_sized(
+                [input_width.max(100.0), 20.0],
+                egui::TextEdit::singleline(&mut search_state.query)
+                    .hint_text("Search...")
+            );
             
             if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                 search_completed = true;
             }
             
-            // Results info
+            // Compact results info
             if search_state.has_results() {
-                ui.label(format!("{}/{} results", 
+                ui.weak(format!("{}/{}", 
                     search_state.selected_result + 1, 
                     search_state.result_count()));
             } else if !search_state.query.is_empty() {
-                ui.weak("No results");
+                ui.weak("∅");
             }
             
-            if ui.button("✕").clicked() {
+            // Minimal close button
+            if ui.small_button("✕").clicked() {
                 search_state.cancel_search();
             }
         });
