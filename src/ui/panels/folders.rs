@@ -1,84 +1,68 @@
 use eframe::egui;
-use crate::types::Folder;
 
 pub struct FoldersPanel;
 
 impl FoldersPanel {
+    // Shared folder data - consistent across all layouts
+    const FOLDERS: &'static [(&'static str, &'static str, u32)] = &[
+        ("INBOX", "📥", 42),
+        ("Sent", "📤", 0),
+        ("Drafts", "📝", 0),
+        ("Spam", "🗑️", 0),
+    ];
+
+    // Fullscreen/wide layout - vertical list
     pub fn render(ui: &mut egui::Ui, selected_folder: &mut usize) {
-        ui.spacing_mut().item_spacing.y = 2.0; // Tighter spacing
+        ui.spacing_mut().item_spacing.y = 1.0;
         
-        let folders = vec![
-            Folder::new("INBOX", "📥", 42),
-            Folder::new("Sent", "📤", 0),
-            Folder::new("Drafts", "📝", 0),
-            Folder::new("Spam", "🗑️", 0),
-        ];
-        
-        for (i, folder) in folders.iter().enumerate() {
+        for (i, (name, icon, count)) in Self::FOLDERS.iter().enumerate() {
             let selected = *selected_folder == i;
+            let label = if *count > 0 {
+                format!("{} {} ({})", icon, name, count)
+            } else {
+                format!("{} {}", icon, name)
+            };
             
-            ui.horizontal(|ui| {
-                let response = ui.selectable_label(selected, folder.display_name());
-                if response.clicked() {
-                    *selected_folder = i;
-                }
-            });
+            if ui.selectable_label(selected, label).clicked() {
+                *selected_folder = i;
+            }
         }
     }
     
+    // Compact horizontal layout
     pub fn render_compact(ui: &mut egui::Ui, selected_folder: &mut usize) {
-        ui.spacing_mut().item_spacing.x = 6.0;
+        ui.spacing_mut().item_spacing.x = 3.0;
         
         ui.horizontal(|ui| {
-            let folders = [
-                ("📥 INBOX", 42),
-                ("📤 Sent", 0), 
-                ("📝 Drafts", 0),
-                ("🗑️ Spam", 0),
-            ];
-            
-            for (i, (folder_name, _count)) in folders.iter().enumerate() {
+            for (i, (name, icon, count)) in Self::FOLDERS.iter().enumerate() {
                 let selected = *selected_folder == i;
-                
-                let style = if selected {
-                    ui.style().visuals.widgets.active
+                let label = if *count > 0 {
+                    format!("{} {} ({})", icon, name, count)
                 } else {
-                    ui.style().visuals.widgets.inactive
+                    format!("{} {}", icon, name)
                 };
                 
-                let response = ui.add(
-                    egui::Button::new(*folder_name)
-                        .small()
-                        .fill(if selected { style.bg_fill } else { egui::Color32::TRANSPARENT })
-                );
-                
-                if response.clicked() {
+                if ui.selectable_label(selected, label).clicked() {
                     *selected_folder = i;
                 }
             }
         });
     }
 
+    // Mobile - icons only
     pub fn render_mobile(ui: &mut egui::Ui, selected_folder: &mut usize) {
-        ui.spacing_mut().item_spacing.x = 4.0;
+        ui.spacing_mut().item_spacing.x = 2.0;
         
         ui.horizontal(|ui| {
-            let folders = ["📥", "📤", "📝", "🗑️"];
-            
-            for (i, folder_icon) in folders.iter().enumerate() {
+            for (i, (_name, icon, count)) in Self::FOLDERS.iter().enumerate() {
                 let selected = *selected_folder == i;
+                let label = if *count > 0 {
+                    format!("{} {}", icon, count)
+                } else {
+                    icon.to_string()
+                };
                 
-                let response = ui.add(
-                    egui::Button::new(*folder_icon)
-                        .small()
-                        .fill(if selected { 
-                            ui.visuals().widgets.active.bg_fill 
-                        } else { 
-                            egui::Color32::TRANSPARENT 
-                        })
-                );
-                
-                if response.clicked() {
+                if ui.selectable_label(selected, label).clicked() {
                     *selected_folder = i;
                 }
             }
