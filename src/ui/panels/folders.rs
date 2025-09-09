@@ -27,7 +27,7 @@ impl FoldersPanel {
         ui.label("📁");
         ui.separator();
         
-        let folders = vec!["INBOX", "Sent", "Drafts", "Spam"];
+        let folders = ["INBOX", "Sent", "Drafts", "Spam"];
         for (i, folder) in folders.iter().enumerate() {
             let selected = *selected_folder == i;
             if ui.selectable_label(selected, *folder).clicked() {
