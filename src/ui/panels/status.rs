@@ -4,10 +4,10 @@ use crate::ui::LayoutMode;
 pub struct StatusPanel;
 
 impl StatusPanel {
-    pub fn render(ui: &mut egui::Ui, layout_mode: LayoutMode) {
+    pub fn render(ui: &mut egui::Ui, layout_mode: LayoutMode, status_message: &str) {
         ui.add_space(2.0);
         ui.horizontal(|ui| {
-            ui.label("🟢 Ready");
+            ui.label(status_message);
             ui.separator();
             ui.weak(format!("Layout: {}", layout_mode.display_name()));
             
