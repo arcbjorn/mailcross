@@ -1,63 +1,339 @@
 use eframe::egui;
 use crate::types::*;
 use crate::ui::*;
+use crate::backend::{AccountManager, AccountEvent};
+use crate::input::{KeyboardHandler, KeyAction, VimState, VimCommand};
+use tokio::sync::mpsc;
 
-#[derive(Default)]
 pub struct MailCrossApp {
     // State
     pub current_account: usize,
     pub selected_folder: usize,
     pub selected_email: usize,
-    pub vim_mode: bool,
     
-    // Data (will be replaced with real data later)
-    #[allow(dead_code)] // Will be used when IMAP is implemented
-    pub accounts: Vec<Account>,
+    // Input handling
+    pub keyboard_handler: KeyboardHandler,
+    pub vim_state: VimState,
+    
+    // Backend
+    pub account_manager: AccountManager,
+    pub event_receiver: Option<mpsc::UnboundedReceiver<AccountEvent>>,
+    
+    // UI State
+    pub status_message: String,
+    pub show_help: bool,
+    pub help_vim_mode: bool,
+    pub composer: ComposerWindow,
 }
 
 impl MailCrossApp {
     pub fn new() -> Self {
+        let mut account_manager = AccountManager::new();
+        
+        // Create communication channels for events
+        let (event_sender, event_receiver) = mpsc::unbounded_channel();
+        account_manager.set_event_sender(event_sender);
+        
+        // Add default accounts
+        account_manager.add_account(Account::new("Gmail", "user@gmail.com"));
+        account_manager.add_account(Account::new("Work", "user@work.com"));
+        account_manager.add_account(Account::new("Personal", "user@personal.com"));
+        
         Self {
             current_account: 0,
             selected_folder: 0,
             selected_email: 0,
-            vim_mode: false,
-            accounts: vec![
-                Account::new("Gmail", "user@gmail.com"),
-                Account::new("Work", "user@work.com"),
-                Account::new("Personal", "user@personal.com"),
-            ],
+            keyboard_handler: KeyboardHandler::new(),
+            vim_state: VimState::new(),
+            account_manager,
+            event_receiver: Some(event_receiver),
+            status_message: "Ready".to_string(),
+            show_help: false,
+            help_vim_mode: false,
+            composer: ComposerWindow::new(),
         }
     }
     
+    pub fn get_accounts(&self) -> Vec<&Account> {
+        self.account_manager.get_accounts()
+    }
+    
+    #[allow(dead_code)] // Will be used when email data is available
+    fn get_current_email(&self) -> Option<Email> {
+        // Mock email for testing compose functionality
+        Some(Email {
+            id: 1,
+            sender: "sender@example.com".to_string(),
+            recipient: "recipient@example.com".to_string(),
+            subject: "Test Email".to_string(),
+            body: "This is a test email body.".to_string(),
+            date: "2024-01-01".to_string(),
+            is_read: false,
+            is_selected: false,
+        })
+    }
+    
+    fn process_events(&mut self) {
+        if let Some(receiver) = &mut self.event_receiver {
+            while let Ok(event) = receiver.try_recv() {
+                match event {
+                    AccountEvent::Connected(email) => {
+                        self.status_message = format!("Connected to {}", email);
+                    }
+                    AccountEvent::Disconnected(email) => {
+                        self.status_message = format!("Disconnected from {}", email);
+                    }
+                    AccountEvent::ConnectionFailed(email, error) => {
+                        self.status_message = format!("Failed to connect to {}: {}", email, error);
+                    }
+                    AccountEvent::FoldersUpdated(email, _folders) => {
+                        self.status_message = format!("Folders updated for {}", email);
+                    }
+                    AccountEvent::EmailsUpdated(email, folder, _emails) => {
+                        self.status_message = format!("Emails updated for {}/{}", email, folder);
+                    }
+                }
+            }
+        }
+    }
+
     pub fn handle_keyboard_input(&mut self, ctx: &egui::Context) {
+        // Update keyboard handler with current vim mode state
+        self.keyboard_handler.vim_mode = self.vim_state.mode != crate::input::vim::VimMode::Normal || self.keyboard_handler.vim_mode;
+        
+        if let Some(action) = self.keyboard_handler.handle_input(ctx) {
+            self.handle_key_action(action);
+        }
+        
+        // Handle vim command mode input separately
+        self.handle_vim_command_input(ctx);
+    }
+
+    fn handle_key_action(&mut self, action: KeyAction) {
+        let accounts_len = self.get_accounts().len();
+        
+        match action {
+            // Account switching
+            KeyAction::SwitchAccount(idx) if idx < accounts_len => {
+                self.current_account = idx;
+                self.status_message = format!("Switched to account {}", idx + 1);
+            }
+            
+            // Navigation
+            KeyAction::NextItem => {
+                // Navigate to next email
+                self.selected_email = (self.selected_email + 1).min(10); // Mock limit
+                self.status_message = format!("Email {}", self.selected_email + 1);
+            }
+            KeyAction::PrevItem => {
+                self.selected_email = self.selected_email.saturating_sub(1);
+                self.status_message = format!("Email {}", self.selected_email + 1);
+            }
+            KeyAction::NextPanel => {
+                // Cycle through panels (folders -> emails -> preview)
+                self.status_message = "Next panel".to_string();
+            }
+            KeyAction::PrevPanel => {
+                self.status_message = "Previous panel".to_string();
+            }
+            KeyAction::FirstItem => {
+                self.selected_email = 0;
+                self.status_message = "First email".to_string();
+            }
+            KeyAction::LastItem => {
+                self.selected_email = 10; // Mock limit
+                self.status_message = "Last email".to_string();
+            }
+            
+            // Email operations  
+            KeyAction::Compose => {
+                self.composer.show_compose(self.current_account);
+                self.status_message = "Compose new email".to_string();
+            }
+            KeyAction::Reply => {
+                // Get current email (mock for now)
+                if let Some(email) = self.get_current_email() {
+                    self.composer.show_reply(&email, self.current_account);
+                    self.status_message = "Reply to email".to_string();
+                }
+            }
+            KeyAction::Forward => {
+                // Get current email (mock for now)
+                if let Some(email) = self.get_current_email() {
+                    self.composer.show_forward(&email, self.current_account);
+                    self.status_message = "Forward email".to_string();
+                }
+            }
+            KeyAction::Delete => {
+                self.status_message = "Delete email".to_string();
+            }
+            
+            // Search
+            KeyAction::Search => {
+                self.status_message = "Search mode".to_string();
+                self.keyboard_handler.set_search_mode(true);
+            }
+            KeyAction::SearchNext => {
+                self.status_message = "Next search result".to_string();
+            }
+            KeyAction::SearchPrev => {
+                self.status_message = "Previous search result".to_string();
+            }
+            
+            // View operations
+            KeyAction::RefreshFolder => {
+                self.status_message = "Refreshing folder...".to_string();
+            }
+            
+            // Settings and help
+            KeyAction::Settings => {
+                self.status_message = "Settings".to_string();
+            }
+            KeyAction::Help => {
+                self.show_help = true;
+                self.help_vim_mode = self.keyboard_handler.vim_mode;
+            }
+            KeyAction::ToggleVimMode => {
+                self.keyboard_handler.toggle_vim_mode();
+                self.vim_state.reset();
+                let mode_name = if self.keyboard_handler.vim_mode { "Vim" } else { "Normal" };
+                self.status_message = format!("Switched to {} mode", mode_name);
+            }
+            
+            // Special actions
+            KeyAction::Cancel => {
+                self.show_help = false;
+                self.keyboard_handler.set_search_mode(false);
+                self.vim_state.reset();
+                self.status_message = "Cancelled".to_string();
+            }
+            KeyAction::Confirm => {
+                self.status_message = "Confirmed".to_string();
+            }
+            KeyAction::EnterCommandMode => {
+                if self.keyboard_handler.vim_mode {
+                    self.vim_state.enter_command_mode();
+                    self.status_message = "Command mode".to_string();
+                }
+            }
+            
+            _ => {
+                // Log unhandled actions for debugging
+                self.status_message = format!("Action: {:?}", action);
+            }
+        }
+    }
+
+    fn handle_vim_command_input(&mut self, ctx: &egui::Context) {
+        if self.vim_state.mode != crate::input::vim::VimMode::Command {
+            return;
+        }
+
         ctx.input(|i| {
             for event in &i.events {
-                if let egui::Event::Key { key, pressed: true, modifiers, .. } = event {
-                    match (key, modifiers.ctrl) {
-                        (egui::Key::Num1, true) => self.current_account = 0,
-                        (egui::Key::Num2, true) => self.current_account = 1,
-                        (egui::Key::Num3, true) => self.current_account = 2,
-                        // Add more keyboard shortcuts here
-                        _ => {}
+                match event {
+                    egui::Event::Key { key: egui::Key::Enter, pressed: true, .. } => {
+                        // Execute command
+                        let command = self.vim_state.command_buffer.clone();
+                        if let Some(vim_cmd) = self.vim_state.process_command(&command) {
+                            self.handle_vim_command(vim_cmd);
+                        } else {
+                            self.status_message = format!("Unknown command: {}", command);
+                        }
+                        self.vim_state.reset();
                     }
+                    egui::Event::Key { key: egui::Key::Escape, pressed: true, .. } => {
+                        self.vim_state.reset();
+                        self.status_message = "Command cancelled".to_string();
+                    }
+                    egui::Event::Key { key: egui::Key::Backspace, pressed: true, .. } => {
+                        if self.vim_state.command_buffer.len() > 1 { // Keep the ':'
+                            self.vim_state.command_buffer.pop();
+                        }
+                    }
+                    egui::Event::Text(text) => {
+                        self.vim_state.command_buffer.push_str(text);
+                    }
+                    _ => {}
                 }
             }
         });
     }
+
+    fn handle_vim_command(&mut self, command: VimCommand) {
+        match command {
+            VimCommand::Quit => {
+                self.status_message = "Quit command (would close app)".to_string();
+            }
+            VimCommand::Save => {
+                self.status_message = "Save command".to_string();
+            }
+            VimCommand::SaveQuit => {
+                self.status_message = "Save and quit".to_string();
+            }
+            VimCommand::EnableVimMode => {
+                self.keyboard_handler.vim_mode = true;
+                self.status_message = "Vim mode enabled".to_string();
+            }
+            VimCommand::DisableVimMode => {
+                self.keyboard_handler.vim_mode = false;
+                self.vim_state.reset();
+                self.status_message = "Vim mode disabled".to_string();
+            }
+            VimCommand::Help => {
+                self.show_help = true;
+                self.help_vim_mode = true;
+            }
+            VimCommand::Set(setting) => {
+                self.status_message = format!("Set: {}", setting);
+            }
+        }
+    }
+
+    fn handle_composer_action(&mut self, action: ComposerAction) {
+        match action {
+            ComposerAction::Send => {
+                let account_email = self.get_accounts()[self.composer.from_account].email.clone();
+                self.status_message = format!("Sending email from {}", account_email);
+                self.composer.visible = false;
+            }
+            ComposerAction::Save => {
+                self.status_message = "Email saved as draft".to_string();
+                self.composer.visible = false;
+            }
+            ComposerAction::Cancel => {
+                self.status_message = "Email composition cancelled".to_string();
+                self.composer.visible = false;
+            }
+        }
+    }
+
 }
 
 impl eframe::App for MailCrossApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Process backend events
+        self.process_events();
+        
         // Handle keyboard input
         self.handle_keyboard_input(ctx);
+        
+        // Handle composer window
+        let accounts: Vec<&Account> = self.account_manager.get_accounts();
+        if let Some(action) = self.composer.render(ctx, &accounts) {
+            self.handle_composer_action(action);
+        }
         
         // Top panel for account switching
         egui::TopBottomPanel::top("accounts")
             .resizable(false)
             .min_height(32.0)
             .show(ctx, |ui| {
-                AccountsPanel::render(ui, &mut self.current_account, self.vim_mode);
+                let accounts = self.get_accounts();
+                let mut current_account = self.current_account;
+                let vim_mode = self.keyboard_handler.vim_mode;
+                AccountsPanel::render(ui, &mut current_account, vim_mode, &accounts);
+                self.current_account = current_account;
             });
 
         // Bottom status bar
@@ -66,7 +342,7 @@ impl eframe::App for MailCrossApp {
             .resizable(false)
             .min_height(24.0)
             .show(ctx, |ui| {
-                StatusPanel::render(ui, layout_mode.clone());
+                StatusPanel::render(ui, layout_mode.clone(), &self.status_message);
             });
 
         // Main content area with responsive layout
@@ -79,7 +355,134 @@ impl eframe::App for MailCrossApp {
                 LayoutMode::TwoPane => self.render_two_pane(ui),
                 LayoutMode::SinglePane => self.render_single_pane(ui),
             }
+            
+            // Show vim command buffer if in command mode
+            if self.vim_state.mode == crate::input::vim::VimMode::Command {
+                ui.painter().rect_filled(
+                    egui::Rect::from_min_size(
+                        egui::pos2(0.0, available_size.y - 30.0), 
+                        egui::vec2(available_size.x, 30.0)
+                    ),
+                    0.0,
+                    egui::Color32::from_gray(40)
+                );
+                
+                let _ = ui.allocate_rect(
+                    egui::Rect::from_min_size(
+                        egui::pos2(10.0, available_size.y - 25.0), 
+                        egui::vec2(available_size.x - 20.0, 20.0)
+                    ),
+                    egui::Sense::hover()
+                );
+                ui.painter().text(
+                    egui::pos2(15.0, available_size.y - 15.0),
+                    egui::Align2::LEFT_CENTER,
+                    format!("{} (Press Enter to execute, Esc to cancel)", &self.vim_state.command_buffer),
+                    egui::FontId::proportional(14.0),
+                    egui::Color32::WHITE
+                );
+                
+                /*ui.allocate_ui_at_rect(
+                    egui::Rect::from_min_size(
+                        egui::pos2(10.0, available_size.y - 25.0), 
+                        egui::vec2(available_size.x - 20.0, 20.0)
+                    ),
+                    |ui| {
+                        ui.colored_label(
+                            egui::Color32::WHITE, 
+                            format!("{} (Press Enter to execute, Esc to cancel)", &self.vim_state.command_buffer)
+                        );
+                    }
+                );*/
+            }
         });
+
+        // Help dialog - render at top level with context
+        if self.show_help {
+            let mut close_help = false;
+            let mut toggle_vim = false;
+            
+            egui::Window::new("Keyboard Shortcuts")
+                .open(&mut self.show_help)
+                .default_width(500.0)
+                .default_height(400.0)
+                .resizable(true)
+                .collapsible(false)
+                .show(ctx, |ui| {
+                    ui.heading(if self.help_vim_mode { "Vim Mode" } else { "Traditional Mode" });
+                    ui.separator();
+                    
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        let shortcuts = if self.help_vim_mode {
+                            crate::input::VimKeymap::get_help_text()
+                        } else {
+                            crate::input::VimKeymap::get_traditional_help_text()
+                        };
+
+                        ui.columns(2, |columns| {
+                            columns[0].heading("Shortcut");
+                            columns[1].heading("Action");
+                        });
+                        
+                        ui.separator();
+                        
+                        for (shortcut, description) in shortcuts {
+                            ui.columns(2, |columns| {
+                                columns[0].monospace(shortcut);
+                                columns[1].label(description);
+                            });
+                        }
+                        
+                        if self.help_vim_mode {
+                            ui.add_space(20.0);
+                            ui.heading("Vim Commands");
+                            ui.separator();
+                            ui.columns(2, |columns| {
+                                columns[0].monospace(":q");
+                                columns[1].label("Quit");
+                            });
+                            ui.columns(2, |columns| {
+                                columns[0].monospace(":set novim");
+                                columns[1].label("Disable vim mode");
+                            });
+                            ui.columns(2, |columns| {
+                                columns[0].monospace(":help");
+                                columns[1].label("Show this help");
+                            });
+                        }
+                        
+                        ui.add_space(20.0);
+                        
+                        ui.horizontal(|ui| {
+                            let toggle_text = if self.help_vim_mode {
+                                "Switch to Traditional Mode"
+                            } else {
+                                "Switch to Vim Mode (experimental)"
+                            };
+                            
+                            if ui.button(toggle_text).clicked() {
+                                toggle_vim = true;
+                            }
+                            
+                            if ui.button("Close").clicked() {
+                                close_help = true;
+                            }
+                        });
+                    });
+                });
+            
+            if close_help {
+                self.show_help = false;
+            }
+            
+            if toggle_vim {
+                self.keyboard_handler.toggle_vim_mode();
+                self.vim_state.reset();
+                let mode_name = if self.keyboard_handler.vim_mode { "Vim" } else { "Normal" };
+                self.status_message = format!("Switched to {} mode", mode_name);
+                self.help_vim_mode = self.keyboard_handler.vim_mode;
+            }
+        }
     }
 }
 
