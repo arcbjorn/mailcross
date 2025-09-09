@@ -1,5 +1,5 @@
 use eframe::egui;
-use crate::ui::{SearchState, ResponsiveLayout};
+use crate::ui::SearchState;
 
 pub struct EmailsPanel;
 

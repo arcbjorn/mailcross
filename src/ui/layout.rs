@@ -19,6 +19,7 @@ impl LayoutMode {
         }
     }
     
+    #[allow(dead_code)] // May be used for debugging or future features
     pub fn display_name(&self) -> &'static str {
         match self {
             LayoutMode::ThreePane => "Fullscreen",

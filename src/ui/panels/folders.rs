@@ -1,6 +1,5 @@
 use eframe::egui;
 use crate::types::Folder;
-use crate::ui::ResponsiveLayout;
 
 pub struct FoldersPanel;
 

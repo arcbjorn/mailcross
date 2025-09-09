@@ -186,10 +186,11 @@ impl SearchPanel {
             
             // Search input (most of the space)
             let input_width = available_width - 120.0;
+            let hint_text = format!("Search {} ...", search_state.get_scope_display().to_lowercase());
             let response = ui.add_sized(
                 [input_width.max(120.0), 22.0],
                 egui::TextEdit::singleline(&mut search_state.query)
-                    .hint_text(format!("Search {} ...", search_state.get_scope_display().to_lowercase()))
+                    .hint_text(hint_text)
             );
             
             if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
