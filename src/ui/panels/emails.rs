@@ -1,13 +1,20 @@
 use eframe::egui;
-use crate::ui::SearchState;
+use crate::ui::{SearchState, ResponsiveLayout};
 
 pub struct EmailsPanel;
 
 impl EmailsPanel {
     #[allow(dead_code)] // Used in some layout modes
     pub fn render(ui: &mut egui::Ui, selected_email: &mut usize) {
-        ui.heading("📨 Emails");
-        ui.separator();
+        ui.spacing_mut().item_spacing.y = ResponsiveLayout::PANEL_SPACING;
+        
+        // Minimal header
+        ui.horizontal(|ui| {
+            ui.weak("📧");
+            ui.weak("Emails");
+        });
+        
+        ui.add_space(ResponsiveLayout::INNER_PADDING);
         
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
@@ -17,18 +24,29 @@ impl EmailsPanel {
     }
 
     pub fn render_with_search(ui: &mut egui::Ui, selected_email: &mut usize, search_state: &SearchState) {
+        ui.spacing_mut().item_spacing.y = ResponsiveLayout::PANEL_SPACING;
+        
         if search_state.active {
-            ui.heading("🔍 Search Results");
-            if search_state.has_results() {
-                ui.label(format!("{} results found", search_state.result_count()));
-            } else if !search_state.query.is_empty() {
-                ui.weak("No results found");
-            }
+            // Minimal search header
+            ui.horizontal(|ui| {
+                ui.weak("🔍");
+                if search_state.has_results() {
+                    ui.weak(format!("{} in {}", search_state.result_count(), search_state.get_scope_display()));
+                } else if !search_state.query.is_empty() {
+                    ui.weak("No results");
+                } else {
+                    ui.weak(format!("Search {}", search_state.get_scope_display()));
+                }
+            });
         } else {
-            ui.heading("📨 Emails");
+            // Standard email header
+            ui.horizontal(|ui| {
+                ui.weak("📧");
+                ui.weak("Emails");
+            });
         }
         
-        ui.separator();
+        ui.add_space(ResponsiveLayout::INNER_PADDING);
         
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
@@ -55,19 +73,30 @@ impl EmailsPanel {
             ("Evan Davis", "Lunch Plans", "2024-01-11"),
         ];
         
-        for (i, (sender, subject, _date)) in emails.iter().enumerate() {
+        for (i, (sender, subject, date)) in emails.iter().enumerate() {
             let selected = *selected_email == i;
             
-            ui.group(|ui| {
+            // Minimal email item styling
+            let response = ui.selectable_label(selected, "");
+            
+            if response.clicked() {
+                *selected_email = i;
+            }
+            
+            // Custom content layout over the selectable background
+            let item_rect = response.rect;
+            ui.allocate_ui_at_rect(item_rect, |ui| {
                 ui.horizontal(|ui| {
-                    let email_text = format!("{} - {}", sender, subject);
-                    if ui.selectable_label(selected, email_text).clicked() {
-                        *selected_email = i;
-                    }
+                    ui.vertical(|ui| {
+                        ui.strong(sender);
+                        ui.weak(subject);
+                        ui.add_space(1.0);
+                        ui.weak(date);
+                    });
                 });
             });
             
-            ui.add_space(2.0);
+            ui.add_space(ResponsiveLayout::PANEL_SPACING);
         }
     }
 
