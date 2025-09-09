@@ -40,7 +40,7 @@ impl ResponsiveLayout {
     
     // Three-pane layout (fullscreen 1200+)
     pub fn calculate_folder_width_fullscreen(available_width: f32) -> f32 {
-        (available_width * 0.18).clamp(180.0, 240.0)  // Slightly wider for comfort
+        (available_width * 0.12).clamp(120.0, 160.0)  // Much narrower
     }
     
     pub fn calculate_email_width_fullscreen(available_width: f32) -> f32 {
@@ -54,7 +54,7 @@ impl ResponsiveLayout {
     
     // Compact layout helpers (half vertical 500+)
     pub fn calculate_folder_height_compact() -> f32 {
-        120.0  // Horizontal folder strip
+        32.0  // Much smaller horizontal folder strip
     }
     
     pub fn calculate_email_height_compact(available_height: f32) -> f32 {
@@ -63,6 +63,6 @@ impl ResponsiveLayout {
     
     // Mobile layout (quarter <500)
     pub fn calculate_mobile_item_height() -> f32 {
-        32.0  // Compact list items
+        24.0  // Very compact list items
     }
 }

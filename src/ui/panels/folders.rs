@@ -3,62 +3,65 @@ use eframe::egui;
 pub struct FoldersPanel;
 
 impl FoldersPanel {
-    const FOLDERS: &'static [(&'static str, &'static str)] = &[
-        ("📥", "INBOX"),
-        ("📤", "Sent"), 
-        ("📝", "Drafts"),
-        ("🗑️", "Spam"),
+    const FOLDERS: &'static [(&'static str, &'static str, u32)] = &[
+        ("📥", "INBOX", 42),
+        ("📤", "Sent", 0), 
+        ("📝", "Drafts", 0),
+        ("🗑️", "Spam", 0),
     ];
 
-    // All layouts now horizontal and ultra-compact
+    // Vertical layout with text - properly sized
     pub fn render(ui: &mut egui::Ui, selected_folder: &mut usize) {
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 1.0;
+        ui.spacing_mut().item_spacing.y = 0.5;
+        
+        for (i, (icon, name, count)) in Self::FOLDERS.iter().enumerate() {
+            let selected = *selected_folder == i;
+            let label = if *count > 0 {
+                format!("{} {} ({})", icon, name, count)
+            } else {
+                format!("{} {}", icon, name)
+            };
             
-            for (i, (icon, name)) in Self::FOLDERS.iter().enumerate() {
-                let selected = *selected_folder == i;
-                let label = if i == 0 { format!("{} 42", icon) } else { icon.to_string() };
-                
-                if ui.small_button(label).clicked() && !selected {
-                    *selected_folder = i;
-                }
-                
-                // Show selected folder name next to buttons
-                if selected {
-                    ui.weak(*name);
-                }
+            if ui.selectable_label(selected, label).clicked() {
+                *selected_folder = i;
             }
-        });
+        }
     }
     
+    // Horizontal compact layout with text
     pub fn render_compact(ui: &mut egui::Ui, selected_folder: &mut usize) {
         ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 1.0;
+            ui.spacing_mut().item_spacing.x = 4.0;
             
-            for (i, (icon, _name)) in Self::FOLDERS.iter().enumerate() {
+            for (i, (icon, name, count)) in Self::FOLDERS.iter().enumerate() {
                 let selected = *selected_folder == i;
-                let label = if i == 0 && selected { "📥42" } else { *icon };
+                let label = if *count > 0 {
+                    format!("{} {} ({})", icon, name, count)
+                } else {
+                    format!("{} {}", icon, name)
+                };
                 
-                if ui.small_button(label).clicked() {
+                if ui.selectable_label(selected, label).clicked() {
                     *selected_folder = i;
                 }
             }
         });
     }
 
+    // Mobile with short text
     pub fn render_mobile(ui: &mut egui::Ui, selected_folder: &mut usize) {
         ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 0.5;
+            ui.spacing_mut().item_spacing.x = 2.0;
             
-            for (i, (icon, _name)) in Self::FOLDERS.iter().enumerate() {
+            for (i, (icon, name, count)) in Self::FOLDERS.iter().enumerate() {
                 let selected = *selected_folder == i;
-                let mut button = egui::Button::new(*icon).small();
+                let label = if *count > 0 {
+                    format!("{} {} {}", icon, name, count)
+                } else {
+                    format!("{} {}", icon, name)
+                };
                 
-                if selected {
-                    button = button.fill(ui.visuals().selection.bg_fill);
-                }
-                
-                if ui.add(button).clicked() {
+                if ui.selectable_label(selected, label).clicked() {
                     *selected_folder = i;
                 }
             }
