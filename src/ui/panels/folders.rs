@@ -7,7 +7,7 @@ impl FoldersPanel {
         ("📥", "INBOX", 42),
         ("📤", "Sent", 0), 
         ("📝", "Drafts", 0),
-        ("🗑️", "Spam", 0),
+        ("🗑", "Spam", 0),
     ];
 
     // Vertical layout with text - properly sized

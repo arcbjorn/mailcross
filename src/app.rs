@@ -465,6 +465,19 @@ impl MailCrossApp {
 
 impl eframe::App for MailCrossApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Hide widget backgrounds and strokes to remove square icons
+        ctx.style_mut(|style| {
+            style.visuals.widgets.inactive.bg_fill = egui::Color32::TRANSPARENT;
+            style.visuals.widgets.hovered.bg_fill = egui::Color32::TRANSPARENT;
+            style.visuals.widgets.active.bg_fill = egui::Color32::TRANSPARENT;
+            style.visuals.widgets.open.bg_fill = egui::Color32::TRANSPARENT;
+            
+            style.visuals.widgets.inactive.bg_stroke = egui::Stroke::NONE;
+            style.visuals.widgets.hovered.bg_stroke = egui::Stroke::NONE;
+            style.visuals.widgets.active.bg_stroke = egui::Stroke::NONE;
+            style.visuals.widgets.open.bg_stroke = egui::Stroke::NONE;
+        });
+        
         // Process backend events
         self.process_events();
         

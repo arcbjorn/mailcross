@@ -12,8 +12,7 @@ impl AccountsPanel {
     ) {
         ui.add_space(4.0);
         ui.horizontal(|ui| {
-            ui.heading("✉️ MailCross");
-            ui.separator();
+            ui.heading("✉ MailCross");
             
             // Render actual accounts
             for (i, account) in accounts.iter().enumerate() {
@@ -28,7 +27,7 @@ impl AccountsPanel {
                 if vim_mode {
                     ui.colored_label(egui::Color32::from_rgb(255, 100, 100), "🔥 VIM");
                 } else {
-                    ui.label("⌨️ NORMAL");
+                    ui.label("⌨ NORMAL");
                 }
             });
         });
