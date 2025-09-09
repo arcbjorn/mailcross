@@ -141,12 +141,12 @@ impl VimKeymap {
             // Email operations
             ("Ctrl+N", "New email (compose)"),
             ("Ctrl+R", "Reply"),
-            ("Ctrl+F", "Forward"),
+            ("Ctrl+L", "Forward"),
             ("Ctrl+D/Delete", "Delete email"),
             
             // Search
-            ("Ctrl+F/F3", "Search"),
-            ("F3/Shift+F3", "Next/Previous result"),
+            ("Ctrl+F", "Search"),
+            ("Ctrl+G/Ctrl+Shift+G", "Next/Previous result"),
             
             // Selection
             ("Space", "Select/Multi-select"),
@@ -157,9 +157,9 @@ impl VimKeymap {
             ("Ctrl+1/2/3", "Switch accounts"),
             
             // View
-            ("F5", "Refresh"),
-            ("Ctrl+,", "Settings"),
-            ("F1", "Help"),
+            ("Ctrl+Shift+R", "Refresh"),
+            ("Alt+S", "Settings"),
+            ("Ctrl+H", "Help"),
             ("Esc", "Back/Cancel"),
         ]
     }
