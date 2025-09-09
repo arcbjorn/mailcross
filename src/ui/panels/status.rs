@@ -12,7 +12,7 @@ impl StatusPanel {
             ui.weak(format!("Layout: {}", layout_mode.display_name()));
             
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.weak("Ctrl+1/2/3: Switch accounts | Ctrl+, Settings | F1 Help");
+                ui.weak("Ctrl+1/2/3: Switch accounts | Ctrl+F Search | Alt+S Settings | Ctrl+H Help");
             });
         });
         ui.add_space(2.0);
