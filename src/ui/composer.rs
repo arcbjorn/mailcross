@@ -10,6 +10,7 @@ pub enum ComposerAction {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // Will be used for email backend integration
 pub enum ComposerMessage {
     SendEmail {
         from: String,
@@ -197,6 +198,7 @@ impl ComposerWindow {
         self.body.clear();
     }
 
+    #[allow(dead_code)] // Will be used for email backend integration
     pub fn set_sender(&mut self, sender: Sender<ComposerMessage>) {
         self.sender = Some(sender);
     }
