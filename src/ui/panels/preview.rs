@@ -4,21 +4,18 @@ pub struct PreviewPanel;
 
 impl PreviewPanel {
     pub fn render(ui: &mut egui::Ui, _selected_email: usize) {
-        ui.heading("📧 Email Preview");
-        ui.separator();
+        ui.spacing_mut().item_spacing.y = 2.0;
         
-        // Email headers - fixed section
-        ui.group(|ui| {
-            ui.vertical(|ui| {
-                ui.label("From: alice@example.com");
-                ui.label("Subject: Project Update");
-                ui.label("Date: 2024-01-15 14:30");
-            });
+        // Clean email headers
+        ui.vertical(|ui| {
+            ui.weak("alice@example.com");
+            ui.strong("Project Update"); 
+            ui.weak("Jan 15, 2024 at 2:30 PM");
         });
         
-        ui.separator();
+        ui.add_space(8.0);
         
-        // Email content - scrollable section
+        // Email content
         let available_height = ui.available_height();
         egui::ScrollArea::vertical()
             .max_height(available_height)
@@ -29,23 +26,21 @@ impl PreviewPanel {
     }
 
     pub fn render_mobile(ui: &mut egui::Ui, _selected_email: usize) {
-        // Mobile-optimized email preview
+        ui.spacing_mut().item_spacing.y = 1.0;
+        
+        // Minimal mobile header
         ui.vertical(|ui| {
-            // Compact header
-            ui.horizontal(|ui| {
-                ui.strong("📧 Alice Smith");
-                ui.separator();
-                ui.weak("Meeting Tomorrow");
-            });
-            
-            ui.add_space(4.0);
-            
-            // Simplified content view
-            egui::ScrollArea::vertical()
-                .auto_shrink([false, false])
-                .show(ui, |ui| {
-                    ui.label("Hi team,\n\nProject update - we've made good progress this week. Key achievements:\n\n• Authentication module done\n• New dashboard design\n• Email client bug fixes\n• Responsive layout\n\nNext: performance & mobile work.\n\nLet me know if questions.\n\nBest,\nAlice");
-                });
+            ui.weak("alice@example.com");
+            ui.strong("Project Update");
         });
+        
+        ui.add_space(6.0);
+        
+        // Condensed content
+        egui::ScrollArea::vertical()
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.label("Hi team,\n\nProject update - we've made good progress this week. Key achievements:\n\n• Authentication module done\n• New dashboard design\n• Email client bug fixes\n• Responsive layout\n\nNext: performance & mobile work.\n\nLet me know if questions.\n\nBest,\nAlice");
+            });
     }
 }
