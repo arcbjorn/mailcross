@@ -156,6 +156,7 @@ impl SearchState {
         }
     }
 
+    #[allow(dead_code)] // May be used for window titles in future
     pub fn get_search_title(&self) -> String {
         format!("🔍 Search {} ({})", self.get_scope_display(), self.get_mode_display())
     }

@@ -59,6 +59,7 @@ impl EmailsPanel {
             });
     }
     
+    #[allow(dead_code)] // Used in some layout modes
     pub fn render_compact(ui: &mut egui::Ui, selected_email: &mut usize) {
         Self::render_email_list(ui, selected_email);
     }
@@ -76,24 +77,15 @@ impl EmailsPanel {
         for (i, (sender, subject, date)) in emails.iter().enumerate() {
             let selected = *selected_email == i;
             
-            // Minimal email item styling
-            let response = ui.selectable_label(selected, "");
-            
-            if response.clicked() {
-                *selected_email = i;
-            }
-            
-            // Custom content layout over the selectable background
-            let item_rect = response.rect;
-            ui.allocate_ui_at_rect(item_rect, |ui| {
-                ui.horizontal(|ui| {
-                    ui.vertical(|ui| {
-                        ui.strong(sender);
-                        ui.weak(subject);
-                        ui.add_space(1.0);
-                        ui.weak(date);
-                    });
-                });
+            // Clean email item layout
+            ui.vertical(|ui| {
+                let sender_response = ui.selectable_label(selected, *sender);
+                ui.weak(*subject);
+                ui.weak(*date);
+                
+                if sender_response.clicked() {
+                    *selected_email = i;
+                }
             });
             
             ui.add_space(ResponsiveLayout::PANEL_SPACING);
