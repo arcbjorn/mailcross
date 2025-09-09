@@ -135,8 +135,10 @@ impl VimKeymap {
         vec![
             // Navigation
             ("↑↓", "Navigate emails/menus"),
+            ("←→", "Navigate between panels"),
             ("Tab/Shift+Tab", "Navigate between panels"),
             ("Home/End", "First/Last email"),
+            ("Page Up/Down", "First/Last email"),
             
             // Email operations
             ("Ctrl+N", "New email (compose)"),
@@ -157,10 +159,11 @@ impl VimKeymap {
             ("Ctrl+1/2/3", "Switch accounts"),
             
             // View
+            ("F5", "Refresh"),
             ("Ctrl+Shift+R", "Refresh"),
             ("Alt+S", "Settings"),
             ("Ctrl+H", "Help"),
-            ("Esc", "Back/Cancel"),
+            ("Esc/Ctrl+W", "Back/Cancel"),
         ]
     }
 }

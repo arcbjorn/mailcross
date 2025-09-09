@@ -55,8 +55,10 @@ cargo build --release
 ### Traditional Mode (Default)
 | Shortcut | Action |
 |----------|--------|
+| `←` / `→` | Navigate between panels |
 | `Tab` / `Shift+Tab` | Navigate between panels |
 | `↑` / `↓` | Navigate emails/menus |
+| `Page Up` / `Page Down` | First/Last email |
 | `Enter` | Open email/confirm |
 | `Ctrl+N` | New email (compose) |
 | `Ctrl+R` | Reply |
@@ -65,10 +67,11 @@ cargo build --release
 | `Ctrl+1/2/3` | Switch accounts |
 | `Ctrl+F` | Search |
 | `Ctrl+G` / `Ctrl+Shift+G` | Next/Previous search result |
+| `F5` | Refresh folder |
 | `Ctrl+Shift+R` | Refresh folder |
 | `Ctrl+H` | Help |
 | `Alt+S` | Settings |
-| `Escape` | Back/Cancel |
+| `Escape` / `Ctrl+W` | Back/Cancel |
 | `Space` | Select/Multi-select |
 
 ### Vim Mode
