@@ -67,12 +67,13 @@ cargo build --release
 | `Ctrl+1/2/3` | Switch accounts |
 | `Ctrl+F` | Search |
 | `Ctrl+G` / `Ctrl+Shift+G` | Next/Previous search result |
-| `F5` | Refresh folder |
 | `Ctrl+Shift+R` | Refresh folder |
 | `Ctrl+H` | Help |
 | `Alt+S` | Settings |
 | `Escape` / `Ctrl+W` | Back/Cancel |
 | `Space` | Select/Multi-select |
+
+**Note:** Follows browser standards - `Ctrl+R` for reply, `Ctrl+Shift+R` for refresh (like hard refresh).
 
 ### Vim Mode
 | Shortcut | Action |

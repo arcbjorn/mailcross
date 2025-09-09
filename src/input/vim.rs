@@ -159,7 +159,6 @@ impl VimKeymap {
             ("Ctrl+1/2/3", "Switch accounts"),
             
             // View
-            ("F5", "Refresh"),
             ("Ctrl+Shift+R", "Refresh"),
             ("Alt+S", "Settings"),
             ("Ctrl+H", "Help"),
