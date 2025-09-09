@@ -32,6 +32,7 @@ pub struct MailCrossApp {
     pub help_vim_mode: bool,
     pub composer: ComposerWindow,
     pub delete_confirmation: Option<DeleteConfirmation>,
+    pub search_state: SearchState,
 }
 
 impl MailCrossApp {
@@ -60,6 +61,7 @@ impl MailCrossApp {
             help_vim_mode: false,
             composer: ComposerWindow::new(),
             delete_confirmation: None,
+            search_state: SearchState::new(),
         }
     }
     
@@ -80,6 +82,42 @@ impl MailCrossApp {
             is_read: false,
             is_selected: false,
         })
+    }
+
+    fn get_current_emails(&self) -> Vec<Email> {
+        // Mock emails for testing search functionality
+        vec![
+            Email {
+                id: 1,
+                sender: "alice@example.com".to_string(),
+                recipient: "me@example.com".to_string(),
+                subject: "Meeting tomorrow".to_string(),
+                body: "Don't forget about our meeting tomorrow at 10am.".to_string(),
+                date: "2024-01-15".to_string(),
+                is_read: false,
+                is_selected: false,
+            },
+            Email {
+                id: 2,
+                sender: "bob@company.com".to_string(),
+                recipient: "me@example.com".to_string(),
+                subject: "Project update".to_string(),
+                body: "The project is progressing well. Here's the latest update.".to_string(),
+                date: "2024-01-14".to_string(),
+                is_read: true,
+                is_selected: false,
+            },
+            Email {
+                id: 3,
+                sender: "newsletter@tech.com".to_string(),
+                recipient: "me@example.com".to_string(),
+                subject: "Weekly Tech News".to_string(),
+                body: "This week in technology: AI advances, new frameworks, and more.".to_string(),
+                date: "2024-01-13".to_string(),
+                is_read: false,
+                is_selected: false,
+            },
+        ]
     }
     
     fn process_events(&mut self) {
@@ -186,14 +224,35 @@ impl MailCrossApp {
             
             // Search
             KeyAction::Search => {
-                self.status_message = "Search mode".to_string();
-                self.keyboard_handler.set_search_mode(true);
+                if !self.search_state.active {
+                    self.search_state.start_search();
+                    self.keyboard_handler.set_search_mode(true);
+                    self.status_message = "Search mode active".to_string();
+                } else {
+                    self.search_state.cancel_search();
+                    self.keyboard_handler.set_search_mode(false);
+                    self.status_message = "Search cancelled".to_string();
+                }
             }
             KeyAction::SearchNext => {
-                self.status_message = "Next search result".to_string();
+                if self.search_state.active && self.search_state.has_results() {
+                    self.search_state.next_result();
+                    self.status_message = format!("Search result {}/{}", 
+                        self.search_state.selected_result + 1, 
+                        self.search_state.result_count());
+                } else {
+                    self.status_message = "No search results".to_string();
+                }
             }
             KeyAction::SearchPrev => {
-                self.status_message = "Previous search result".to_string();
+                if self.search_state.active && self.search_state.has_results() {
+                    self.search_state.prev_result();
+                    self.status_message = format!("Search result {}/{}", 
+                        self.search_state.selected_result + 1, 
+                        self.search_state.result_count());
+                } else {
+                    self.status_message = "No search results".to_string();
+                }
             }
             
             // View operations
@@ -219,6 +278,9 @@ impl MailCrossApp {
             // Special actions
             KeyAction::Cancel => {
                 self.show_help = false;
+                if self.search_state.active {
+                    self.search_state.cancel_search();
+                }
                 self.keyboard_handler.set_search_mode(false);
                 self.vim_state.reset();
                 self.status_message = "Cancelled".to_string();
@@ -357,6 +419,12 @@ impl eframe::App for MailCrossApp {
         // Handle keyboard input
         self.handle_keyboard_input(ctx);
         
+        // Handle search input and updates
+        if self.search_state.active {
+            let emails = self.get_current_emails();
+            self.search_state.perform_search(&emails);
+        }
+        
         // Handle composer window
         let accounts: Vec<&Account> = self.account_manager.get_accounts();
         if let Some(action) = self.composer.render(ctx, &accounts) {
@@ -374,6 +442,16 @@ impl eframe::App for MailCrossApp {
                 AccountsPanel::render(ui, &mut current_account, vim_mode, &accounts);
                 self.current_account = current_account;
             });
+
+        // Search bar (if active)
+        if self.search_state.active {
+            egui::TopBottomPanel::bottom("search")
+                .resizable(false)
+                .min_height(32.0)
+                .show(ctx, |ui| {
+                    SearchPanel::render_search_bar(ui, &mut self.search_state);
+                });
+        }
 
         // Bottom status bar
         let layout_mode = LayoutMode::from_width(ctx.screen_rect().width());
@@ -578,7 +656,7 @@ impl MailCrossApp {
             // Middle panel - Email list
             ui.vertical(|ui| {
                 ui.set_width(email_width);
-                EmailsPanel::render(ui, &mut self.selected_email);
+                EmailsPanel::render_with_search(ui, &mut self.selected_email, &self.search_state);
             });
 
             ui.separator();
@@ -608,7 +686,7 @@ impl MailCrossApp {
                 ui.separator();
                 
                 // Emails section
-                EmailsPanel::render(ui, &mut self.selected_email);
+                EmailsPanel::render_with_search(ui, &mut self.selected_email, &self.search_state);
             });
 
             ui.separator();
@@ -634,7 +712,11 @@ impl MailCrossApp {
             // Middle: Email list (limited height)
             ui.vertical(|ui| {
                 ui.set_height(200.0);
-                EmailsPanel::render_compact(ui, &mut self.selected_email);
+                if self.search_state.active {
+                    EmailsPanel::render_with_search(ui, &mut self.selected_email, &self.search_state);
+                } else {
+                    EmailsPanel::render_compact(ui, &mut self.selected_email);
+                }
             });
             
             ui.separator();
