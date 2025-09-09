@@ -94,22 +94,27 @@ impl KeyboardHandler {
             // Navigation
             (Key::Tab, m) if m.shift => Some(KeyAction::PrevPanel),
             (Key::Tab, _) => Some(KeyAction::NextPanel),
+            (Key::ArrowLeft, _) => Some(KeyAction::PrevPanel),
+            (Key::ArrowRight, _) => Some(KeyAction::NextPanel),
             (Key::ArrowUp, _) => Some(KeyAction::PrevItem),
             (Key::ArrowDown, _) => Some(KeyAction::NextItem),
             (Key::Home, _) => Some(KeyAction::FirstItem),
             (Key::End, _) => Some(KeyAction::LastItem),
+            (Key::PageUp, _) => Some(KeyAction::FirstItem),
+            (Key::PageDown, _) => Some(KeyAction::LastItem),
             
             // Email operations
             (Key::N, m) if m.ctrl => Some(KeyAction::Compose),
             (Key::R, m) if m.ctrl => Some(KeyAction::Reply),
-            (Key::F, m) if m.ctrl => Some(KeyAction::Forward),
+            (Key::L, m) if m.ctrl => Some(KeyAction::Forward), // L for forLward/reLay
             (Key::D, m) if m.ctrl => Some(KeyAction::Delete),
             (Key::Delete, _) => Some(KeyAction::Delete),
             
-            // Search
-            (Key::F, m) if m.ctrl => Some(KeyAction::Search),
-            (Key::F3, m) if m.shift => Some(KeyAction::SearchPrev),
-            (Key::F3, _) => Some(KeyAction::SearchNext),
+            // Search - Standard convention
+            (Key::F, m) if m.ctrl && !m.shift => Some(KeyAction::Search), // Ctrl+F: search current
+            (Key::F, m) if m.ctrl && m.shift => Some(KeyAction::Search),  // Ctrl+Shift+F: search all (same for now)
+            (Key::G, m) if m.ctrl && m.shift => Some(KeyAction::SearchPrev),
+            (Key::G, m) if m.ctrl => Some(KeyAction::SearchNext),
             
             // Selection
             (Key::Space, _) => Some(KeyAction::Select),
@@ -118,11 +123,15 @@ impl KeyboardHandler {
             (Key::Escape, _) => Some(KeyAction::Cancel),
             
             // View operations
+            (Key::R, m) if m.ctrl && m.shift => Some(KeyAction::RefreshFolder),
             (Key::F5, _) => Some(KeyAction::RefreshFolder),
             
-            // Settings
-            (Key::Comma, m) if m.ctrl => Some(KeyAction::Settings),
-            (Key::F1, _) => Some(KeyAction::Help),
+            // Close/Cancel
+            (Key::W, m) if m.ctrl => Some(KeyAction::Cancel),
+            
+            // Settings  
+            (Key::S, m) if m.alt => Some(KeyAction::Settings),
+            (Key::H, m) if m.ctrl => Some(KeyAction::Help),
             
             _ => None,
         }
