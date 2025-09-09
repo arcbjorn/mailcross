@@ -24,7 +24,8 @@ pub enum KeyAction {
     MarkUnread,
     
     // Search and selection
-    Search,
+    SearchCurrentEmail,
+    SearchAllEmails,
     SearchNext,
     SearchPrev,
     Select,
@@ -111,8 +112,8 @@ impl KeyboardHandler {
             (Key::Delete, _) => Some(KeyAction::Delete),
             
             // Search - Standard convention
-            (Key::F, m) if m.ctrl && !m.shift => Some(KeyAction::Search), // Ctrl+F: search current
-            (Key::F, m) if m.ctrl && m.shift => Some(KeyAction::Search),  // Ctrl+Shift+F: search all (same for now)
+            (Key::F, m) if m.ctrl && !m.shift => Some(KeyAction::SearchCurrentEmail), // Ctrl+F: search current email
+            (Key::F, m) if m.ctrl && m.shift => Some(KeyAction::SearchAllEmails),     // Ctrl+Shift+F: search all emails
             (Key::G, m) if m.ctrl && m.shift => Some(KeyAction::SearchPrev),
             (Key::G, m) if m.ctrl => Some(KeyAction::SearchNext),
             
@@ -159,7 +160,7 @@ impl KeyboardHandler {
             (Key::F, _) => Some(KeyAction::Forward),
             
             // Search
-            (Key::Slash, _) => Some(KeyAction::Search),
+            (Key::Slash, _) => Some(KeyAction::SearchAllEmails), // Vim / searches all
             (Key::N, m) if m.shift => Some(KeyAction::SearchPrev),
             (Key::N, _) => Some(KeyAction::SearchNext),
             
