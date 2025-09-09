@@ -1,20 +1,43 @@
 use eframe::egui;
-use crate::ui::LayoutMode;
+use crate::ui::{LayoutMode, ResponsiveLayout};
 
 pub struct StatusPanel;
 
 impl StatusPanel {
     pub fn render(ui: &mut egui::Ui, layout_mode: LayoutMode, status_message: &str) {
-        ui.add_space(2.0);
+        // Minimal status bar with responsive shortcuts
         ui.horizontal(|ui| {
-            ui.label(status_message);
-            ui.separator();
-            ui.weak(format!("Layout: {}", layout_mode.display_name()));
+            ui.spacing_mut().item_spacing.x = ResponsiveLayout::PANEL_SPACING * 2.0;
             
+            // Status message with subtle styling
+            ui.colored_label(ui.visuals().weak_text_color(), status_message);
+            
+            // Layout indicator (subtle)
+            ui.weak("•");
+            ui.weak(layout_mode.display_name());
+            
+            // Responsive shortcut hints
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.weak("Ctrl+1/2/3: Switch accounts | Ctrl+F Search | Alt+S Settings | Ctrl+H Help");
+                let shortcuts = match layout_mode {
+                    LayoutMode::ThreePane => "Ctrl+F Search • Alt+S Settings • Ctrl+1/2/3 Accounts",
+                    LayoutMode::TwoPane => "Ctrl+F Search • Alt+S Settings",
+                    LayoutMode::CompactPane => "Ctrl+F Search • Ctrl+H Help",
+                    LayoutMode::MobilePane => "Ctrl+F Search",
+                };
+                ui.weak(shortcuts);
             });
         });
-        ui.add_space(2.0);
+    }
+    
+    pub fn render_minimal(ui: &mut egui::Ui, status_message: &str) {
+        // Ultra-minimal status for mobile/compact modes
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = ResponsiveLayout::PANEL_SPACING;
+            ui.colored_label(ui.visuals().weak_text_color(), status_message);
+            
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.weak("Ctrl+H Help");
+            });
+        });
     }
 }

@@ -510,13 +510,27 @@ impl eframe::App for MailCrossApp {
                 });
         }
 
-        // Bottom status bar
+        // Bottom status bar with responsive height
         let layout_mode = LayoutMode::from_width(ctx.screen_rect().width());
+        let status_height = match layout_mode {
+            LayoutMode::ThreePane => 28.0,
+            LayoutMode::TwoPane => 24.0,
+            LayoutMode::CompactPane => 20.0,
+            LayoutMode::MobilePane => 18.0,
+        };
+        
         egui::TopBottomPanel::bottom("status")
             .resizable(false)
-            .min_height(24.0)
+            .min_height(status_height)
             .show(ctx, |ui| {
-                StatusPanel::render(ui, layout_mode.clone(), &self.status_message);
+                match layout_mode {
+                    LayoutMode::MobilePane | LayoutMode::CompactPane => {
+                        StatusPanel::render_minimal(ui, &self.status_message);
+                    }
+                    _ => {
+                        StatusPanel::render(ui, layout_mode.clone(), &self.status_message);
+                    }
+                }
             });
 
         // Main content area with responsive layout
