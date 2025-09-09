@@ -60,7 +60,7 @@ impl EmailCache {
 
         self.cache
             .entry(account.to_string())
-            .or_insert_with(HashMap::new)
+            .or_default()
             .insert(cached_folder.folder.name.clone(), cached_folder);
     }
 
@@ -103,8 +103,7 @@ impl EmailCache {
         if let Some(cached_folder) = self.cache
             .get_mut(account)
             .and_then(|folders| folders.get_mut(folder_name))
-        {
-            if let Some(cached_email) = cached_folder
+            && let Some(cached_email) = cached_folder
                 .emails
                 .iter_mut()
                 .find(|e| e.email.id == email_id)
@@ -113,7 +112,6 @@ impl EmailCache {
                 cached_email.full_body_loaded = true;
                 cached_email.cached_at = Instant::now();
             }
-        }
     }
 
     #[allow(dead_code)] // Will be used for retrieving email bodies
