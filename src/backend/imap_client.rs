@@ -129,6 +129,7 @@ impl ImapClient {
                 emails.push(Email::new(
                     msg_id as usize,
                     &from,
+                    "unknown@example.com", // Recipient placeholder - will be extracted from headers
                     &subject,
                     &date,
                     "(Email content preview...)" // Will be loaded on demand
