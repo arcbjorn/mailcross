@@ -160,7 +160,9 @@ impl SettingsWindow {
                         ui.weak("• Delete - Delete");
                         ui.weak("• Ctrl+N - Compose");
                         ui.weak("• Ctrl+R - Reply");
-                        ui.weak("• Ctrl+, - Settings");
+                        ui.weak("• Ctrl+L - Forward");
+                        ui.weak("• Ctrl+H - Help");
+                        ui.weak("• Alt+S - Settings");
                     }
 
                     ui.add_space(20.0);
