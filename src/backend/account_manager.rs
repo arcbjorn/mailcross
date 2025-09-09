@@ -10,6 +10,7 @@ pub enum AccountCommand {
     RefreshFolders(String), // email
     FetchEmails { account_email: String, folder: String, limit: usize },
     StoreCredentials { email: String, password: String },
+    DeleteEmail { account_email: String, email_id: usize },
 }
 
 #[allow(dead_code)] // Will be used for UI updates
@@ -19,6 +20,7 @@ pub enum AccountEvent {
     ConnectionFailed(String, String), // email, error
     FoldersUpdated(String, Vec<Folder>), // email, folders
     EmailsUpdated(String, String, Vec<Email>), // email, folder, emails
+    EmailDeleted(String, usize), // account email, email id
 }
 
 #[allow(dead_code)] // Backend account management infrastructure
@@ -87,6 +89,9 @@ impl AccountManager {
                 if let Err(e) = self.imap_client.store_credentials(&email, &password) {
                     self.send_event(AccountEvent::ConnectionFailed(email, format!("Failed to store credentials: {:?}", e)));
                 }
+            }
+            AccountCommand::DeleteEmail { account_email, email_id } => {
+                self.delete_email(&account_email, email_id).await;
             }
         }
     }
@@ -183,6 +188,25 @@ impl AccountManager {
         }
     }
 
+    #[allow(dead_code)] // Will be used for email deletion
+    async fn delete_email(&mut self, email: &str, email_id: usize) {
+        // For now, just simulate deletion by removing from local account
+        if let Some(account) = self.accounts.get_mut(email) {
+            account.emails.retain(|e| e.id != email_id);
+            self.send_event(AccountEvent::EmailDeleted(email.to_string(), email_id));
+        }
+        
+        // TODO: Implement actual IMAP deletion
+        // match self.imap_client.delete_email(email, email_id).await {
+        //     Ok(_) => {
+        //         self.send_event(AccountEvent::EmailDeleted(email.to_string(), email_id));
+        //     }
+        //     Err(e) => {
+        //         self.send_event(AccountEvent::ConnectionFailed(email.to_string(), format!("Failed to delete email: {:?}", e)));
+        //     }
+        // }
+    }
+
     #[allow(dead_code)] // Helper for event dispatching
     fn send_event(&self, event: AccountEvent) {
         if let Some(sender) = &self.event_sender {
@@ -198,6 +222,19 @@ impl AccountManager {
     #[allow(dead_code)] // Will be used for maintenance
     pub fn cleanup_cache(&mut self) {
         self.email_cache.clear_expired();
+    }
+
+    #[allow(dead_code)] // Will be used for email deletion from UI
+    pub fn delete_email_by_index(&mut self, account_index: usize, email_id: usize) {
+        let accounts: Vec<_> = self.accounts.values().collect();
+        if let Some(account) = accounts.get(account_index) {
+            let account_email = account.email.clone();
+            // For immediate UI feedback, remove from local account
+            if let Some(account) = self.accounts.get_mut(&account_email) {
+                account.emails.retain(|e| e.id != email_id);
+                self.send_event(AccountEvent::EmailDeleted(account_email, email_id));
+            }
+        }
     }
 }
 
