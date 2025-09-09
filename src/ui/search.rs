@@ -8,6 +8,7 @@ pub struct SearchState {
     pub results: Vec<Email>,
     pub selected_result: usize,
     pub search_mode: SearchMode,
+    pub search_scope: SearchScope,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -18,6 +19,12 @@ pub enum SearchMode {
     All,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum SearchScope {
+    CurrentEmail,
+    AllEmails,
+}
+
 impl SearchState {
     pub fn new() -> Self {
         Self {
@@ -26,14 +33,24 @@ impl SearchState {
             results: Vec::new(),
             selected_result: 0,
             search_mode: SearchMode::All,
+            search_scope: SearchScope::AllEmails,
         }
     }
 
-    pub fn start_search(&mut self) {
+    pub fn start_search(&mut self, scope: SearchScope) {
         self.active = true;
         self.query.clear();
         self.results.clear();
         self.selected_result = 0;
+        self.search_scope = scope;
+    }
+
+    pub fn start_search_current_email(&mut self) {
+        self.start_search(SearchScope::CurrentEmail);
+    }
+
+    pub fn start_search_all_emails(&mut self) {
+        self.start_search(SearchScope::AllEmails);
     }
 
     pub fn cancel_search(&mut self) {
@@ -131,6 +148,17 @@ impl SearchState {
             SearchMode::All => "All",
         }
     }
+
+    pub fn get_scope_display(&self) -> &'static str {
+        match self.search_scope {
+            SearchScope::CurrentEmail => "Current Email",
+            SearchScope::AllEmails => "All Emails",
+        }
+    }
+
+    pub fn get_search_title(&self) -> String {
+        format!("🔍 Search {} ({})", self.get_scope_display(), self.get_mode_display())
+    }
 }
 
 impl Default for SearchState {
@@ -151,6 +179,10 @@ impl SearchPanel {
         
         ui.horizontal(|ui| {
             ui.label("🔍");
+            
+            // Search scope indicator
+            ui.label(format!("[{}]", search_state.get_scope_display()));
+            ui.separator();
             
             // Search mode selector
             egui::ComboBox::from_id_salt("search_mode")

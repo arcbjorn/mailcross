@@ -225,11 +225,22 @@ impl MailCrossApp {
             }
             
             // Search
-            KeyAction::Search => {
+            KeyAction::SearchCurrentEmail => {
                 if !self.search_state.active {
-                    self.search_state.start_search();
+                    self.search_state.start_search_current_email();
                     self.keyboard_handler.set_search_mode(true);
-                    self.status_message = "Search mode active".to_string();
+                    self.status_message = "Search current email (Ctrl+F)".to_string();
+                } else {
+                    self.search_state.cancel_search();
+                    self.keyboard_handler.set_search_mode(false);
+                    self.status_message = "Search cancelled".to_string();
+                }
+            }
+            KeyAction::SearchAllEmails => {
+                if !self.search_state.active {
+                    self.search_state.start_search_all_emails();
+                    self.keyboard_handler.set_search_mode(true);
+                    self.status_message = "Search all emails (Ctrl+Shift+F)".to_string();
                 } else {
                     self.search_state.cancel_search();
                     self.keyboard_handler.set_search_mode(false);
