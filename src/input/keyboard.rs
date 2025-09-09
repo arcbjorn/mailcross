@@ -124,7 +124,6 @@ impl KeyboardHandler {
             
             // View operations
             (Key::R, m) if m.ctrl && m.shift => Some(KeyAction::RefreshFolder),
-            (Key::F5, _) => Some(KeyAction::RefreshFolder),
             
             // Close/Cancel
             (Key::W, m) if m.ctrl => Some(KeyAction::Cancel),
