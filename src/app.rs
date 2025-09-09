@@ -5,6 +5,13 @@ use crate::backend::{AccountManager, AccountEvent};
 use crate::input::{KeyboardHandler, KeyAction, VimState, VimCommand};
 use tokio::sync::mpsc;
 
+#[derive(Debug, Clone)]
+pub struct DeleteConfirmation {
+    #[allow(dead_code)] // Will be used for actual email deletion
+    pub email_id: usize,
+    pub email_subject: String,
+}
+
 pub struct MailCrossApp {
     // State
     pub current_account: usize,
@@ -24,6 +31,7 @@ pub struct MailCrossApp {
     pub show_help: bool,
     pub help_vim_mode: bool,
     pub composer: ComposerWindow,
+    pub delete_confirmation: Option<DeleteConfirmation>,
 }
 
 impl MailCrossApp {
@@ -51,6 +59,7 @@ impl MailCrossApp {
             show_help: false,
             help_vim_mode: false,
             composer: ComposerWindow::new(),
+            delete_confirmation: None,
         }
     }
     
@@ -91,6 +100,9 @@ impl MailCrossApp {
                     }
                     AccountEvent::EmailsUpdated(email, folder, _emails) => {
                         self.status_message = format!("Emails updated for {}/{}", email, folder);
+                    }
+                    AccountEvent::EmailDeleted(email, email_id) => {
+                        self.status_message = format!("Deleted email {} from {}", email_id, email);
                     }
                 }
             }
@@ -165,7 +177,11 @@ impl MailCrossApp {
                 }
             }
             KeyAction::Delete => {
-                self.status_message = "Delete email".to_string();
+                if let Some(email) = self.get_current_email() {
+                    self.show_delete_confirmation(email.id);
+                } else {
+                    self.status_message = "No email selected to delete".to_string();
+                }
             }
             
             // Search
@@ -306,6 +322,29 @@ impl MailCrossApp {
                 self.composer.visible = false;
             }
         }
+    }
+
+    fn show_delete_confirmation(&mut self, email_id: usize) {
+        if let Some(email) = self.get_current_email() {
+            self.delete_confirmation = Some(DeleteConfirmation {
+                email_id,
+                email_subject: email.subject.clone(),
+            });
+            self.status_message = "Confirm deletion".to_string();
+        }
+    }
+
+    fn handle_delete_confirmation(&mut self, confirmed: bool) {
+        if let Some(confirmation) = &self.delete_confirmation {
+            if confirmed {
+                // Delete email through backend
+                self.account_manager.delete_email_by_index(self.current_account, confirmation.email_id);
+                self.status_message = format!("Deleting email: {}", confirmation.email_subject);
+            } else {
+                self.status_message = "Deletion cancelled".to_string();
+            }
+        }
+        self.delete_confirmation = None;
     }
 
 }
@@ -481,6 +520,40 @@ impl eframe::App for MailCrossApp {
                 let mode_name = if self.keyboard_handler.vim_mode { "Vim" } else { "Normal" };
                 self.status_message = format!("Switched to {} mode", mode_name);
                 self.help_vim_mode = self.keyboard_handler.vim_mode;
+            }
+        }
+
+        // Delete confirmation dialog
+        if let Some(confirmation) = &self.delete_confirmation.clone() {
+            let mut should_delete = false;
+            let mut should_cancel = false;
+            
+            egui::Window::new("Delete Email")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+                .show(ctx, |ui| {
+                    ui.vertical_centered(|ui| {
+                        ui.label("Are you sure you want to delete this email?");
+                        ui.add_space(10.0);
+                        ui.label(format!("Subject: {}", confirmation.email_subject));
+                        ui.add_space(20.0);
+                        
+                        ui.horizontal(|ui| {
+                            if ui.button("Delete").clicked() {
+                                should_delete = true;
+                            }
+                            if ui.button("Cancel").clicked() {
+                                should_cancel = true;
+                            }
+                        });
+                    });
+                });
+                
+            if should_delete {
+                self.handle_delete_confirmation(true);
+            } else if should_cancel {
+                self.handle_delete_confirmation(false);
             }
         }
     }
