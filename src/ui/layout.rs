@@ -29,11 +29,11 @@ pub struct ResponsiveLayout;
 
 impl ResponsiveLayout {
     pub fn calculate_folder_width(available_width: f32) -> f32 {
-        (available_width * 0.2).max(150.0).min(250.0)
+        (available_width * 0.2).clamp(150.0, 250.0)
     }
     
     pub fn calculate_email_width(available_width: f32) -> f32 {
-        (available_width * 0.35).max(300.0).min(500.0)
+        (available_width * 0.35).clamp(300.0, 500.0)
     }
     
     pub fn calculate_left_pane_width(available_width: f32) -> f32 {
