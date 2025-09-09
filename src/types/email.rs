@@ -1,8 +1,9 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)] // Will be used when IMAP is implemented
 pub struct Email {
     pub id: usize,
     pub sender: String,
+    pub recipient: String,
     pub subject: String,
     pub date: String,
     pub body: String,
@@ -12,10 +13,11 @@ pub struct Email {
 
 impl Email {
     #[allow(dead_code)] // Will be used when IMAP is implemented
-    pub fn new(id: usize, sender: &str, subject: &str, date: &str, body: &str) -> Self {
+    pub fn new(id: usize, sender: &str, recipient: &str, subject: &str, date: &str, body: &str) -> Self {
         Self {
             id,
             sender: sender.to_string(),
+            recipient: recipient.to_string(),
             subject: subject.to_string(),
             date: date.to_string(),
             body: body.to_string(),
