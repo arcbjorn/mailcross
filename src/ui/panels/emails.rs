@@ -94,4 +94,56 @@ impl EmailsPanel {
             ui.add_space(2.0);
         }
     }
+
+    pub fn render_mobile(ui: &mut egui::Ui, selected_email: &mut usize, search_state: &SearchState) {
+        // Mobile layout with search awareness
+        if search_state.active && search_state.has_results() {
+            ui.label(format!("🔍 {} results in {}", 
+                search_state.result_count(), 
+                search_state.get_scope_display()));
+            ui.separator();
+            Self::render_mobile_email_list(ui, selected_email, true);
+        } else {
+            ui.label("📧 Emails");
+            ui.separator();
+            Self::render_mobile_email_list(ui, selected_email, false);
+        }
+    }
+
+    pub fn render_mobile_full(ui: &mut egui::Ui, selected_email: &mut usize) {
+        // Full-height mobile email list
+        ui.label("📧 Emails");
+        ui.separator();
+        Self::render_mobile_email_list(ui, selected_email, false);
+    }
+
+    fn render_mobile_email_list(ui: &mut egui::Ui, selected_email: &mut usize, _compact: bool) {
+        // Ultra-compact email list for mobile
+        let emails = [
+            ("Alice Smith", "Meeting Tomorrow", "2024-01-15"),
+            ("Bob Johnson", "Project Update", "2024-01-14"),
+            ("Carol Williams", "Code Review", "2024-01-13"),
+            ("David Brown", "Status Report", "2024-01-12"),
+            ("Evan Davis", "Lunch Plans", "2024-01-11"),
+        ];
+
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            for (i, (sender, subject, date)) in emails.iter().enumerate() {
+                let selected = *selected_email == i;
+                
+                ui.horizontal(|ui| {
+                    if ui.selectable_label(selected, format!("📧 {}", sender)).clicked() {
+                        *selected_email = i;
+                    }
+                });
+                
+                if selected {
+                    ui.weak(format!("   {}", subject));
+                    ui.weak(format!("   {}", date));
+                }
+                
+                ui.add_space(1.0);
+            }
+        });
+    }
 }

@@ -35,4 +35,17 @@ impl FoldersPanel {
             }
         }
     }
+
+    pub fn render_mobile(ui: &mut egui::Ui, selected_folder: &mut usize) {
+        // Ultra-compact horizontal strip for mobile
+        ui.horizontal(|ui| {
+            let folders = ["INBOX", "Sent", "Drafts", "Spam"];
+            for (i, folder) in folders.iter().enumerate() {
+                let selected = *selected_folder == i;
+                if ui.small_button(if selected { format!("● {}", folder) } else { folder.to_string() }).clicked() {
+                    *selected_folder = i;
+                }
+            }
+        });
+    }
 }
