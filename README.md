@@ -65,7 +65,8 @@ cargo build --release
 | `Ctrl+L` | Forward |
 | `Ctrl+D` / `Delete` | Delete email |
 | `Ctrl+1/2/3` | Switch accounts |
-| `Ctrl+F` | Search |
+| `Ctrl+F` | Search current email |
+| `Ctrl+Shift+F` | Search all emails |
 | `Ctrl+G` / `Ctrl+Shift+G` | Next/Previous search result |
 | `Ctrl+Shift+R` | Refresh folder |
 | `Ctrl+H` | Help |

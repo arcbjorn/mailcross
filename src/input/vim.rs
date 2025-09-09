@@ -147,7 +147,8 @@ impl VimKeymap {
             ("Ctrl+D/Delete", "Delete email"),
             
             // Search
-            ("Ctrl+F", "Search"),
+            ("Ctrl+F", "Search current email"),
+            ("Ctrl+Shift+F", "Search all emails"),
             ("Ctrl+G/Ctrl+Shift+G", "Next/Previous result"),
             
             // Selection

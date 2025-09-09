@@ -156,7 +156,8 @@ impl SettingsWindow {
                     } else {
                         ui.label("Traditional shortcuts:");
                         ui.weak("• ↑↓ - Navigate");
-                        ui.weak("• Ctrl+F - Search");
+                        ui.weak("• Ctrl+F - Search current email");
+                        ui.weak("• Ctrl+Shift+F - Search all emails");
                         ui.weak("• Delete - Delete");
                         ui.weak("• Ctrl+N - Compose");
                         ui.weak("• Ctrl+R - Reply");
