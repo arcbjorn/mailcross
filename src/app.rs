@@ -52,7 +52,7 @@ impl MailCrossApp {
         Self {
             current_account: 0,
             selected_folder: 0,
-            selected_email: 0,
+            selected_email: usize::MAX,
             keyboard_handler: KeyboardHandler::new(),
             vim_state: VimState::new(),
             account_manager,
@@ -174,12 +174,24 @@ impl MailCrossApp {
             // Navigation
             KeyAction::NextItem => {
                 // Navigate to next email
-                self.selected_email = (self.selected_email + 1).min(10); // Mock limit
+                if self.selected_email == usize::MAX {
+                    self.selected_email = 0; // Start from first email
+                } else {
+                    self.selected_email = (self.selected_email + 1).min(5); // Mock limit (6 emails total, 0-5)
+                }
                 self.status_message = format!("Email {}", self.selected_email + 1);
             }
             KeyAction::PrevItem => {
-                self.selected_email = self.selected_email.saturating_sub(1);
-                self.status_message = format!("Email {}", self.selected_email + 1);
+                if self.selected_email == usize::MAX || self.selected_email == 0 {
+                    // If no selection or at first email, do nothing or wrap to last
+                    if self.selected_email == 0 {
+                        self.selected_email = usize::MAX; // Go back to no selection
+                        self.status_message = "No email selected".to_string();
+                    }
+                } else {
+                    self.selected_email = self.selected_email.saturating_sub(1);
+                    self.status_message = format!("Email {}", self.selected_email + 1);
+                }
             }
             KeyAction::NextPanel => {
                 // Cycle through panels (folders -> emails -> preview)
@@ -193,7 +205,7 @@ impl MailCrossApp {
                 self.status_message = "First email".to_string();
             }
             KeyAction::LastItem => {
-                self.selected_email = 10; // Mock limit
+                self.selected_email = 5; // Mock limit (6 emails total, 0-5)
                 self.status_message = "Last email".to_string();
             }
             

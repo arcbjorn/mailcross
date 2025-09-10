@@ -33,7 +33,7 @@ impl EmailsPanel {
     }
     
     fn render_email_list(ui: &mut egui::Ui, selected_email: &mut usize) {
-        ui.spacing_mut().item_spacing.y = 1.0;
+        ui.spacing_mut().item_spacing.y = 0.0;
         
         let emails = vec![
             ("Alice Johnson", "Project Update", "Jan 15"),
@@ -45,41 +45,47 @@ impl EmailsPanel {
         ];
         
         for (i, (sender, subject, date)) in emails.iter().enumerate() {
-            let selected = *selected_email == i;
+            let selected = *selected_email == i && *selected_email != usize::MAX;
             
-            // Compact table-like email row
-            ui.horizontal(|ui| {
-                let total_width = ui.available_width();
-                
-                // Sender column (30%)
-                ui.allocate_ui_with_layout(
-                    [total_width * 0.3, 20.0].into(),
-                    egui::Layout::left_to_right(egui::Align::Center),
-                    |ui| {
-                        if ui.selectable_label(selected, *sender).clicked() {
-                            *selected_email = i;
-                        }
-                    }
+            let response = ui.interact(
+                ui.available_rect_before_wrap(),
+                ui.id().with(i),
+                egui::Sense::click()
+            );
+            
+            if response.clicked() {
+                *selected_email = i;
+            }
+            
+            if selected {
+                ui.painter().rect_filled(
+                    response.rect,
+                    0.0,
+                    ui.visuals().selection.bg_fill,
                 );
+            }
+            
+            ui.vertical(|ui| {
+                ui.add_space(6.0);
                 
-                // Subject column (50%) 
-                ui.allocate_ui_with_layout(
-                    [total_width * 0.5, 20.0].into(),
-                    egui::Layout::left_to_right(egui::Align::Center),
-                    |ui| {
-                        ui.weak(*subject);
-                    }
-                );
+                ui.horizontal(|ui| {
+                    ui.add_space(12.0);
+                    ui.label(egui::RichText::new(*sender).strong().size(13.0));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add_space(12.0);
+                        ui.label(egui::RichText::new(*date).size(11.0).weak());
+                    });
+                });
                 
-                // Date column (20%)
-                ui.allocate_ui_with_layout(
-                    [total_width * 0.2, 20.0].into(),
-                    egui::Layout::right_to_left(egui::Align::Center),
-                    |ui| {
-                        ui.weak(*date);
-                    }
-                );
+                ui.horizontal(|ui| {
+                    ui.add_space(12.0);
+                    ui.label(egui::RichText::new(*subject).size(12.0).weak());
+                });
+                
+                ui.add_space(6.0);
             });
+            
+            ui.separator();
         }
     }
 
@@ -116,7 +122,7 @@ impl EmailsPanel {
     }
 
     fn render_mobile_email_list(ui: &mut egui::Ui, selected_email: &mut usize, _compact: bool) {
-        ui.spacing_mut().item_spacing.y = 1.0;
+        ui.spacing_mut().item_spacing.y = 0.0;
         
         let emails = [
             ("Alice", "Meeting Tomorrow", "Jan 15"),
@@ -127,12 +133,48 @@ impl EmailsPanel {
         ];
 
         egui::ScrollArea::vertical().id_salt("mobile_emails").show(ui, |ui| {
-            for (i, (sender, subject, _date)) in emails.iter().enumerate() {
-                let selected = *selected_email == i;
+            for (i, (sender, subject, date)) in emails.iter().enumerate() {
+                let selected = *selected_email == i && *selected_email != usize::MAX;
                 
-                if ui.selectable_label(selected, format!("{} · {}", sender, subject)).clicked() {
+                let response = ui.interact(
+                    ui.available_rect_before_wrap(),
+                    ui.id().with(i),
+                    egui::Sense::click()
+                );
+                
+                if response.clicked() {
                     *selected_email = i;
                 }
+                
+                if selected {
+                    ui.painter().rect_filled(
+                        response.rect,
+                        0.0,
+                        ui.visuals().selection.bg_fill,
+                    );
+                }
+                
+                ui.vertical(|ui| {
+                    ui.add_space(4.0);
+                    
+                    ui.horizontal(|ui| {
+                        ui.add_space(8.0);
+                        ui.label(egui::RichText::new(*sender).strong().size(12.0));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.add_space(8.0);
+                            ui.label(egui::RichText::new(*date).size(10.0).weak());
+                        });
+                    });
+                    
+                    ui.horizontal(|ui| {
+                        ui.add_space(8.0);
+                        ui.label(egui::RichText::new(*subject).size(11.0).weak());
+                    });
+                    
+                    ui.add_space(4.0);
+                });
+                
+                ui.separator();
             }
         });
     }
