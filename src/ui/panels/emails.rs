@@ -47,9 +47,9 @@ impl EmailsPanel {
         for (i, (sender, subject, date)) in emails.iter().enumerate() {
             let selected = *selected_email == i && *selected_email != usize::MAX;
             
-            let response = ui.interact(
-                ui.available_rect_before_wrap(),
-                ui.id().with(i),
+            // Allocate rect for the entire email item
+            let (rect, response) = ui.allocate_exact_size(
+                egui::vec2(ui.available_width(), 50.0),
                 egui::Sense::click()
             );
             
@@ -57,32 +57,31 @@ impl EmailsPanel {
                 *selected_email = i;
             }
             
+            // Draw selection background
             if selected {
                 ui.painter().rect_filled(
-                    response.rect,
+                    rect,
                     0.0,
                     ui.visuals().selection.bg_fill,
                 );
             }
             
-            ui.vertical(|ui| {
-                ui.add_space(6.0);
-                
-                ui.horizontal(|ui| {
+            // Draw content inside the rect
+            let mut ui_child = ui.child_ui(rect, *ui.layout(), None);
+            ui_child.add_space(6.0);
+            
+            ui_child.horizontal(|ui| {
+                ui.add_space(12.0);
+                ui.label(egui::RichText::new(*sender).strong().size(13.0));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.add_space(12.0);
-                    ui.label(egui::RichText::new(*sender).strong().size(13.0));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.add_space(12.0);
-                        ui.label(egui::RichText::new(*date).size(11.0).weak());
-                    });
+                    ui.label(egui::RichText::new(*date).size(11.0).weak());
                 });
-                
-                ui.horizontal(|ui| {
-                    ui.add_space(12.0);
-                    ui.label(egui::RichText::new(*subject).size(12.0).weak());
-                });
-                
-                ui.add_space(6.0);
+            });
+            
+            ui_child.horizontal(|ui| {
+                ui.add_space(12.0);
+                ui.label(egui::RichText::new(*subject).size(12.0).weak());
             });
             
             ui.separator();
@@ -136,9 +135,9 @@ impl EmailsPanel {
             for (i, (sender, subject, date)) in emails.iter().enumerate() {
                 let selected = *selected_email == i && *selected_email != usize::MAX;
                 
-                let response = ui.interact(
-                    ui.available_rect_before_wrap(),
-                    ui.id().with(i),
+                // Allocate rect for the entire email item
+                let (rect, response) = ui.allocate_exact_size(
+                    egui::vec2(ui.available_width(), 40.0),
                     egui::Sense::click()
                 );
                 
@@ -146,32 +145,31 @@ impl EmailsPanel {
                     *selected_email = i;
                 }
                 
+                // Draw selection background
                 if selected {
                     ui.painter().rect_filled(
-                        response.rect,
+                        rect,
                         0.0,
                         ui.visuals().selection.bg_fill,
                     );
                 }
                 
-                ui.vertical(|ui| {
-                    ui.add_space(4.0);
-                    
-                    ui.horizontal(|ui| {
+                // Draw content inside the rect
+                let mut ui_child = ui.child_ui(rect, *ui.layout(), None);
+                ui_child.add_space(4.0);
+                
+                ui_child.horizontal(|ui| {
+                    ui.add_space(8.0);
+                    ui.label(egui::RichText::new(*sender).strong().size(12.0));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_space(8.0);
-                        ui.label(egui::RichText::new(*sender).strong().size(12.0));
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.add_space(8.0);
-                            ui.label(egui::RichText::new(*date).size(10.0).weak());
-                        });
+                        ui.label(egui::RichText::new(*date).size(10.0).weak());
                     });
-                    
-                    ui.horizontal(|ui| {
-                        ui.add_space(8.0);
-                        ui.label(egui::RichText::new(*subject).size(11.0).weak());
-                    });
-                    
-                    ui.add_space(4.0);
+                });
+                
+                ui_child.horizontal(|ui| {
+                    ui.add_space(8.0);
+                    ui.label(egui::RichText::new(*subject).size(11.0).weak());
                 });
                 
                 ui.separator();
