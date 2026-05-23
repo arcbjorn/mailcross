@@ -6,31 +6,31 @@
 
 A fast, secure, and keyboard-driven multi-account email client built with Rust and egui.
 
-## ✨ Features
+## Features
 
-### 🔐 Security & Privacy
+### Security & Privacy
 - **Direct IMAP access** - No third-party APIs or data collection
 - **Secure credential storage** - System keyring integration
 - **PGP-ready architecture** - Prepared for encryption support
 
-### ⌨️ Dual Input Modes
+### Dual Input Modes
 - **Traditional Mode** - Standard keyboard shortcuts (Ctrl+keys)
 - **Vim Mode** - Modal editing with hjkl navigation and : commands
 - **Instant switching** - Toggle between modes in real-time
 
-### 📧 Email Management
+### Email Management
 - **Multi-account support** - Switch accounts with Ctrl+1/2/3
 - **Full email operations** - Compose, reply, forward, delete
 - **Smart search** - Search by subject, sender, body, or all fields
 - **Delete confirmation** - Protect against accidental deletions
 
-### 🎨 Responsive Interface
+### Responsive Interface
 - **Three layout modes** - Adapts to window size automatically
 - **GPU accelerated** - Smooth 60fps rendering with wgpu
 - **HiDPI support** - Crystal clear on high-resolution displays
 - **Minimal footprint** - ~14MB binary, ~25MB RAM usage
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Rust 1.70 or newer
@@ -50,7 +50,7 @@ cargo build --release
 3. Toggle Vim mode if desired
 4. Press `Ctrl+H` for keyboard shortcuts help
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 ### Traditional Mode (Default)
 | Shortcut | Action |
@@ -102,7 +102,7 @@ cargo build --release
 | `:set novim` | Disable vim mode |
 | `:help` | Show help |
 
-## 🏗️ Architecture
+## Architecture
 
 ### Tech Stack
 - **[egui](https://github.com/emilk/egui)** - Immediate mode GUI (8MB framework)
@@ -118,7 +118,7 @@ cargo build --release
 - **Memory efficient** - No persistent widget tree, minimal overhead
 - **GPU accelerated** - Hardware-accelerated rendering via wgpu
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -147,7 +147,7 @@ src/
         └── status.rs    # Status bar
 ```
 
-## 🎯 Design Philosophy
+## Design Philosophy
 
 ### Why Immediate Mode GUI?
 - **Simple mental model** - UI = function(state)
@@ -167,7 +167,7 @@ src/
 - **PGP ready** - Architecture supports future encryption
 - **No telemetry** - Zero data collection
 
-## 🔧 Configuration
+## Configuration
 
 ### Email Accounts
 Currently uses demo data. IMAP integration is implemented but requires:
@@ -182,7 +182,7 @@ Currently uses demo data. IMAP integration is implemented but requires:
 - **Behavior** - Auto-refresh, delete confirmation
 - **Layout** - Responsive panel sizing
 
-## 🚧 Future Enhancements
+## Future Enhancements
 
 ### Phase 2 Features
 - [ ] Real IMAP server configuration UI
@@ -200,7 +200,7 @@ Currently uses demo data. IMAP integration is implemented but requires:
 - [ ] Memory usage profiling
 - [ ] Accessibility features
 
-## 📊 Performance
+## Performance
 
 Measured on Linux desktop:
 - **Binary size**: 14MB (release build)
@@ -209,7 +209,7 @@ Measured on Linux desktop:
 - **Cold start**: <500ms
 - **Search performance**: <10ms for 1000 emails
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -227,11 +227,11 @@ cargo clippy              # Code quality check
 cargo build --release     # Production build
 ```
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [egui](https://github.com/emilk/egui) - Excellent immediate mode GUI framework
 - [Rust community](https://www.rust-lang.org/community) - Amazing ecosystem
